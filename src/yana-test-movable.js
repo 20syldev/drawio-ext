@@ -1,48 +1,47 @@
-/** 
- * Draw.io plugin for generating network graphs using YaNa API
- * This plugin allows users to fetch network data from the YaNa API
- * and visualize it as a graph in the Draw.io editor.
- */
+/*
+ * Graph generation for switches using YaNa API [TESTING]
+*/
 Draw.loadPlugin(function (ui) {
-    const graph = ui.editor.graph;  // Initialize the graph object
-    const toolbar = ui.toolbar;     // Initialize the toolbar
-    let currentEntity = null;       // Variable to store the current selected entity
+    const graph = ui.editor.graph;
+    const toolbar = ui.toolbar;
+    let currentEntity = null;
+    let movedCellsSet = new Set();
 
-    // Adding menu items to the toolbar for various actions
-    toolbar.addMenuFunction("Select", "Select entity", true, () => selectEntity(), toolbar.container);
-    toolbar.addMenuFunction("Load", "Load graph", true, () => selectEntity(loadGraph), toolbar.container);
-    toolbar.addMenuFunction("Re-update", "Update graph", true, updateGraph, toolbar.container);
+    toolbar.addMenuFunction("Load", "Load initial graph", true, () => selectEntity(loadInitialGraph), toolbar.container);
+    toolbar.addMenuFunction("Re-update", "Update graph", true, reUpdateGraph, toolbar.container);
     toolbar.addMenuFunction("Reset", "Reset graph", true, resetGraph, toolbar.container);
-    toolbar.addMenuFunction("Lock", "Lock cells", true, () => graph.cellsMovable = false, toolbar.container);
-    toolbar.addMenuFunction("Unlock", "Unlock cells", true, () => graph.cellsMovable = true, toolbar.container);
 
-    toolbar.addMenuFunction("Layout", "Apply layout", true, () => organicLayout(graph), toolbar.container);
+    graph.addListener(mxEvent.CELLS_MOVED, (sender, evt) => {
+        const cells = evt.getProperty('cells');
+        cells.forEach(cell => {
+            const style = cell.getStyle() || '';
+            if (style.includes('movable=1;') && !movedCellsSet.has(cell.id)) {
+                cell.movable = true;
+                cell.setStyle(style.replace('movable=1;', 'movable=0;'));
+                movedCellsSet.add(cell.id);
+            }
+        });
+        console.log('Cells moved:', cells.map(cell => cell.id));
+    });
 
-    /**
-     * Select an entity from a list and load its related data.
-     * This function fetches the available entities and shows a selection popup.
-     * After the user selects an entity, it triggers the callback to load the graph.
-     */
     function selectEntity(callback) {
         fetch('http://na2-api.zenetys.loc/entities')
             .then(res => res.json())
             .then(entities => {
                 const popup = new mxWindow("Select Entity", document.createElement('div'), 300, 300, 250, 80, true, true);
                 const select = document.createElement('select');
-                // Populate the select element with available entities
                 entities.forEach(entity => {
                     const option = document.createElement('option');
                     option.value = entity;
                     option.textContent = entity;
                     select.appendChild(option);
                 });
-                // Create validate and cancel buttons for entity selection
                 const validateBtn = document.createElement('button');
                 validateBtn.textContent = "Validate";
                 validateBtn.onclick = () => {
                     currentEntity = select.value;
                     popup.destroy();
-                    if (callback) callback();
+                    callback();
                 };
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = "Cancel";
@@ -56,12 +55,7 @@ Draw.loadPlugin(function (ui) {
             .catch(err => console.error("Error fetching entities:", err));
     }
 
-    /**
-     * Fetch data for devices and links related to the selected entity.
-     * This function makes two API calls to retrieve device and link information.
-     * It processes the data and returns it in a usable format.
-     */
-    async function fetchData() {
+    async function fetchGraphData() {
         const apiDevices = `http://na2-api.zenetys.loc/entity/${currentEntity}/devices?q=switch`;
         const apiLinks = `http://na2-api.zenetys.loc/entity/${currentEntity}/dump?table=snei`;
 
@@ -71,16 +65,8 @@ Draw.loadPlugin(function (ui) {
                 fetch(apiDevices).then(res => res.json()),
                 fetch(apiLinks).then(res => res.json())
             ]);
-
             const switches = devices.reduce((acc, device) => {
-                if (device.id && device.iface) {
-                    acc[device.id] = device.iface;
-                }
-                return acc;
-            }, {});
-
-            const deviceConnections = devices.reduce((acc, device) => {
-                acc[device.id] = 0;
+                acc[device.id] = device.iface;
                 return acc;
             }, {});
 
@@ -89,47 +75,36 @@ Draw.loadPlugin(function (ui) {
                     portLinks.forEach(link => {
                         if (link.id !== switchId) {
                             const targetIface = switches[link.id] ? switches[link.id][link.ifname] : null;
+                            const speed = targetIface ? targetIface.speed || 0 : 0;
+                            const duplex = targetIface ? targetIface.duplex || 0 : 0;
 
-                            if (targetIface) {
-                                const speed = targetIface.speed || 0;
-                                const duplex = targetIface.duplex || 0;
-
-                                formattedLinks.push({
-                                    sourceId: switchId,
-                                    targetId: link.id,
-                                    sourcePort: port,
-                                    targetPort: link.ifname,
-                                    speed: speed,
-                                    duplex: duplex
-                                });
-
-                                deviceConnections[switchId]++;
-                                deviceConnections[link.id]++;
-                            }
+                            formattedLinks.push({
+                                sourceId: switchId,
+                                targetId: link.id,
+                                sourcePort: port,
+                                targetPort: link.ifname,
+                                speed: speed,
+                                duplex: duplex
+                            });
                         }
                     });
                 });
             });
-
-            return { devices, links: formattedLinks, deviceConnections };
+            return { devices, links: formattedLinks };
         } catch (error) {
             console.error(error);
-            return { devices: [], links: [], deviceConnections: {} };
+            return { devices: [], links: [] };
         }
     }
 
-    /**
-     * Load the graph data based on the selected entity.
-     * This function retrieves devices and links related to the selected entity 
-     * and then constructs the graph elements (devices and links).
-     */
-    function loadGraph() {
+    function loadInitialGraph() {
         if (!currentEntity) return alert("No entity selected!");
-        fetchData().then(({ devices, links, deviceConnections }) => {
+        fetchGraphData().then(({ devices, links }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices, deviceConnections);
+                const switchMap = createDevices(graph, parent, devices);
+                updateDevices(graph, switchMap, devices);
                 createLinks(graph, parent, switchMap, links);
 
                 const entityObject = document.createElement('object');
@@ -141,40 +116,43 @@ Draw.loadPlugin(function (ui) {
                 entityCell.setValue(entityObject);
                 graph.getModel().add(entityCell);
             } finally {
-                organicLayout(graph);
+                applyOrganicLayout(graph);
                 graph.getModel().endUpdate();
             }
         }).catch(error => console.error('Error loading initial graph:', error));
     }
 
-    /**
-     * Update the graph with the latest data from the selected entity.
-     * This function fetches the latest devices and links, 
-     * then updates the graph elements with the new data.
-     */
-    function updateGraph() {
+    function reUpdateGraph() {
         if (!currentEntity) return alert("No entity selected!");
-
-        graph.cellsMovable = false;
-        fetchData().then(({ devices, links, deviceConnections }) => {
+        lockCells(true);
+    
+        fetchGraphData().then(({ devices, links }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices, deviceConnections);
+                const switchMap = createDevices(graph, parent, devices);
                 updateDevices(graph, switchMap, devices);
                 updateLinks(graph, parent, switchMap, links);
+                markMovedCells(graph);
+    
+                let entityCell = graph.getModel().getCell('0');
+                if (!entityCell) {
+                    const entityObject = document.createElement('object');
+                    entityObject.setAttribute('label', '');
+                    entityObject.setAttribute('yana-entity', currentEntity);
+                    entityObject.setAttribute('id', '0');
+                    const entityCell = new mxCell();
+                    entityCell.setValue(entityObject);
+                    graph.getModel().add(entityCell);
+                }
             } finally {
                 graph.getModel().endUpdate();
             }
-            organicLayout(graph);
-            graph.cellsMovable = true;
+            applyOrganicLayout(graph);
+            lockCells(false);
         }).catch(console.error);
     }
 
-    /**
-     * Reset the graph (clear everything).
-     * This function resets the graph, clearing any existing cells and entity selections.
-     */
     function resetGraph() {
         currentEntity = null;
         graph.getModel().beginUpdate();
@@ -182,31 +160,21 @@ Draw.loadPlugin(function (ui) {
         finally { graph.getModel().endUpdate(); }
     }
 
-    /**
-     * Create device elements in the graph.
-     * This function creates device vertices for each device in the provided data.
-     * It sets device names, IPs, and other properties based on the provided data.
-     */
-    function createDevices(graph, parent, devices, deviceConnections = {}) {
+    function createDevices(graph, parent, devices) {
         const switchMap = {};
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
-                const connectionCount = deviceConnections[device.id] || 0;
-                const fontSize = Math.min(6 + connectionCount * 0.5, 20);
-
-                const text = `${device.name}\n${device.ip[0]}`;
-                const height = Math.min(12 + connectionCount, 40);
-                const width = document.createElement('canvas').getContext('2d').measureText(text).width;
-
+                const textContent = `${device.name}\n${device.ip[0]}`;
+                const textWidth = getTextWidth(textContent);
+                const width = Math.max(100, textWidth);
                 const switchVertex = graph.insertVertex(
                     parent,
                     device.id,
-                    text,
+                    textContent,
                     0,
                     0,
-                    width + fontSize,
-                    height + fontSize,
-                    `movable=1;fontSize=${fontSize};`
+                    width,
+                    40
                 );
                 switchMap[device.id] = switchVertex;
             }
@@ -214,11 +182,6 @@ Draw.loadPlugin(function (ui) {
         return switchMap;
     }
 
-    /**
-     * Update device information in the graph.
-     * This function updates the text and geometry of the device vertices 
-     * based on the updated device data.
-     */
     function updateDevices(graph, switchMap, devices) {
         devices.forEach(device => {
             const switchVertex = graph.getModel().getCell(device.id);
@@ -230,11 +193,6 @@ Draw.loadPlugin(function (ui) {
         });
     }
 
-    /**
-     * Create link edges between devices in the graph.
-     * This function creates edges between device vertices based on the link data provided.
-     * It adds speed and duplex information to each link edge.
-     */
     function createLinks(graph, parent, switchMap, links) {
         const processedLinks = new Set();
         links.forEach(link => {
@@ -259,31 +217,54 @@ Draw.loadPlugin(function (ui) {
         });
     }
 
-    /**
-     * Update the links in the graph.
-     * This function removes existing link edges and creates new edges based on updated link data.
-     */
     function updateLinks(graph, parent, switchMap, links) {
         const existingEdges = graph.getModel().getCells().filter(cell => graph.getModel().isEdge(cell));
         existingEdges.forEach(edge => graph.removeCells([edge]));
         createLinks(graph, parent, switchMap, links);
     }
 
-    /**
-     * Get the style for a link (edge) based on speed and duplex mode.
-     * This function returns a string representing the style of the link 
-     * based on the link's speed and duplex properties.
-     */
+    function markMovedCells(graph) {
+        const cells = graph.getModel().getCells();
+        const movedCells = cells.filter(cell => cell.movable && cell.geometry && cell.geometry.relative === false);
+        
+        movedCells.forEach(cell => {
+            if (cell.movable && !movedCellsSet.has(cell.id)) {
+                cell.movable = false;
+                movedCellsSet.add(cell.id);
+                console.log('Cell locked:', cell.id);
+            }
+        });
+    }
+    
+    function lockCells(lock) {
+        const cells = graph.getModel().getCells();
+        Object.values(cells).forEach(cell => {
+            if (cell.geometry && cell.geometry.relative === false) {
+                if (!movedCellsSet.has(cell.id)) {
+                    cell.movable = !lock;
+    
+                    let style = cell.getStyle() || '';
+                    if (lock) style = style.replace('movable=0;', 'movable=1;');
+                    else style = style.replace('movable=1;', 'movable=0;');
+                    cell.setStyle(style);
+                }
+            }
+        });
+    }
+
     function getLinkStyle(speed, duplex) {
         return duplex === 2 || speed <= 1000000000
             ? 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=red;endArrow=none;'
             : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;';
     }
 
-    /**
-     * Add port labels to the edges (links) between devices.
-     * This function adds labels to the edges to indicate the source and target ports for each link.
-     */
+    function getTextWidth(text) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const width = context.measureText(text).width;
+        return width;
+    }
+
     function addPortLabels(graph, edge, sourcePort, targetPort, linkKey) {
         const existingSourceLabel = graph.getModel().getCell(`${linkKey}-source`);
         const existingTargetLabel = graph.getModel().getCell(`${linkKey}-target`);
@@ -313,23 +294,14 @@ Draw.loadPlugin(function (ui) {
         }
     }
 
-    /**
-     * Apply an organic layout to the graph.
-     * This function arranges the graph using the organic layout algorithm 
-     * to ensure that the devices and links are placed in a visually appealing way.
-     */
-    function organicLayout(graph) {
+    function applyOrganicLayout(graph) {
         const layout = new mxFastOrganicLayout(graph);
+        layout.forceConstant = 200;
+        layout.minDistanceLimit = 200;
         const parent = graph.getDefaultParent();
-        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => cell.vertex && cell.movable);
-
-        layout.vertexArray = movableCells;
-        layout.forceConstant = 200 + movableCells.length * 30;
-
         graph.getModel().beginUpdate();
         try {
             layout.execute(parent);
-            graph.fit();
         } finally {
             graph.getModel().endUpdate();
         }
