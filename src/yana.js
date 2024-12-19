@@ -6,9 +6,14 @@ Draw.loadPlugin(function (ui) {
     const toolbar = ui.toolbar;
     let currentEntity = null;
 
-    toolbar.addMenuFunction("Load", "Load initial graph", true, () => selectEntity(loadInitialGraph), toolbar.container);
-    toolbar.addMenuFunction("Re-update", "Update graph", true, reUpdateGraph, toolbar.container);
+    toolbar.addMenuFunction("Select", "Select entity", true, () => selectEntity(), toolbar.container);
+    toolbar.addMenuFunction("Load", "Load graph", true, () => selectEntity(loadGraph), toolbar.container);
+    toolbar.addMenuFunction("Re-update", "Update graph", true, updateGraph, toolbar.container);
     toolbar.addMenuFunction("Reset", "Reset graph", true, resetGraph, toolbar.container);
+    toolbar.addMenuFunction("Lock", "Lock cells", true, () => graph.cellsMovable = false, toolbar.container);
+    toolbar.addMenuFunction("Unlock", "Unlock cells", true, () => graph.cellsMovable = true, toolbar.container);
+
+    toolbar.addMenuFunction("Layout", "Apply layout", true, () => organicLayout(graph), toolbar.container);
 
     function selectEntity(callback) {
         fetch('http://na2-api.zenetys.loc/entities')
@@ -27,7 +32,7 @@ Draw.loadPlugin(function (ui) {
                 validateBtn.onclick = () => {
                     currentEntity = select.value;
                     popup.destroy();
-                    callback();
+                    if (callback) callback();
                 };
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = "Cancel";
@@ -41,7 +46,7 @@ Draw.loadPlugin(function (ui) {
             .catch(err => console.error("Error fetching entities:", err));
     }
 
-    async function fetchGraphData() {
+    async function fetchData() {
         const apiDevices = `http://na2-api.zenetys.loc/entity/${currentEntity}/devices?q=switch`;
         const apiLinks = `http://na2-api.zenetys.loc/entity/${currentEntity}/dump?table=snei`;
 
@@ -51,8 +56,16 @@ Draw.loadPlugin(function (ui) {
                 fetch(apiDevices).then(res => res.json()),
                 fetch(apiLinks).then(res => res.json())
             ]);
+
             const switches = devices.reduce((acc, device) => {
-                acc[device.id] = device.iface;
+                if (device.id && device.iface) {
+                    acc[device.id] = device.iface;
+                }
+                return acc;
+            }, {});
+
+            const deviceConnections = devices.reduce((acc, device) => {
+                acc[device.id] = 0;
                 return acc;
             }, {});
 
@@ -61,36 +74,42 @@ Draw.loadPlugin(function (ui) {
                     portLinks.forEach(link => {
                         if (link.id !== switchId) {
                             const targetIface = switches[link.id] ? switches[link.id][link.ifname] : null;
-                            const speed = targetIface ? targetIface.speed || 0 : 0;
-                            const duplex = targetIface ? targetIface.duplex || 0 : 0;
 
-                            formattedLinks.push({
-                                sourceId: switchId,
-                                targetId: link.id,
-                                sourcePort: port,
-                                targetPort: link.ifname,
-                                speed: speed,
-                                duplex: duplex
-                            });
+                            if (targetIface) {
+                                const speed = targetIface.speed || 0;
+                                const duplex = targetIface.duplex || 0;
+
+                                formattedLinks.push({
+                                    sourceId: switchId,
+                                    targetId: link.id,
+                                    sourcePort: port,
+                                    targetPort: link.ifname,
+                                    speed: speed,
+                                    duplex: duplex
+                                });
+
+                                deviceConnections[switchId]++;
+                                deviceConnections[link.id]++;
+                            }
                         }
                     });
                 });
             });
-            return { devices, links: formattedLinks };
+
+            return { devices, links: formattedLinks, deviceConnections };
         } catch (error) {
             console.error(error);
-            return { devices: [], links: [] };
+            return { devices: [], links: [], deviceConnections: {} };
         }
     }
 
-    function loadInitialGraph() {
+    function loadGraph() {
         if (!currentEntity) return alert("No entity selected!");
-        fetchGraphData().then(({ devices, links }) => {
+        fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices);
-                updateDevices(graph, switchMap, devices);
+                const switchMap = createDevices(graph, parent, devices, deviceConnections);
                 createLinks(graph, parent, switchMap, links);
 
                 const entityObject = document.createElement('object');
@@ -102,36 +121,29 @@ Draw.loadPlugin(function (ui) {
                 entityCell.setValue(entityObject);
                 graph.getModel().add(entityCell);
             } finally {
-                applyOrganicLayout(graph);
+                organicLayout(graph);
                 graph.getModel().endUpdate();
             }
         }).catch(error => console.error('Error loading initial graph:', error));
     }
 
-    function reUpdateGraph() {
+     */
+    function updateGraph() {
         if (!currentEntity) return alert("No entity selected!");
-        fetchGraphData().then(({ devices, links }) => {
+
+        graph.cellsMovable = false;
+        fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices);
+                const switchMap = createDevices(graph, parent, devices, deviceConnections);
                 updateDevices(graph, switchMap, devices);
                 updateLinks(graph, parent, switchMap, links);
-
-                let entityCell = graph.getModel().getCell('0');
-                if (!entityCell) {
-                    const entityObject = document.createElement('object');
-                    entityObject.setAttribute('label', '');
-                    entityObject.setAttribute('yana-entity', currentEntity);
-                    entityObject.setAttribute('id', '0');
-                    const entityCell = new mxCell();
-                    entityCell.setValue(entityObject);
-                    graph.getModel().add(entityCell);
-                }
             } finally {
                 graph.getModel().endUpdate();
             }
-            applyOrganicLayout(graph);
+            organicLayout(graph);
+            graph.cellsMovable = true;
         }).catch(console.error);
     }
 
@@ -142,21 +154,26 @@ Draw.loadPlugin(function (ui) {
         finally { graph.getModel().endUpdate(); }
     }
 
-    function createDevices(graph, parent, devices) {
+    function createDevices(graph, parent, devices, deviceConnections = {}) {
         const switchMap = {};
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
-                const textContent = `${device.name}\n${device.ip[0]}`;
-                const textWidth = getTextWidth(textContent);
-                const width = Math.max(100, textWidth);
+                const connectionCount = deviceConnections[device.id] || 0;
+                const fontSize = Math.min(6 + connectionCount * 0.5, 20);
+
+                const text = `${device.name}\n${device.ip[0]}`;
+                const height = Math.min(12 + connectionCount, 40);
+                const width = document.createElement('canvas').getContext('2d').measureText(text).width;
+
                 const switchVertex = graph.insertVertex(
                     parent,
                     device.id,
-                    textContent,
+                    text,
                     0,
                     0,
-                    width,
-                    40
+                    width + fontSize,
+                    height + fontSize,
+                    `movable=1;fontSize=${fontSize};`
                 );
                 switchMap[device.id] = switchVertex;
             }
@@ -211,13 +228,6 @@ Draw.loadPlugin(function (ui) {
             : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;';
     }
 
-    function getTextWidth(text) {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        const width = context.measureText(text).width;
-        return width;
-    }
-
     function addPortLabels(graph, edge, sourcePort, targetPort, linkKey) {
         const existingSourceLabel = graph.getModel().getCell(`${linkKey}-source`);
         const existingTargetLabel = graph.getModel().getCell(`${linkKey}-target`);
@@ -247,14 +257,18 @@ Draw.loadPlugin(function (ui) {
         }
     }
 
-    function applyOrganicLayout(graph) {
+    function organicLayout(graph) {
         const layout = new mxFastOrganicLayout(graph);
-        layout.forceConstant = 200;
-        layout.minDistanceLimit = 200;
         const parent = graph.getDefaultParent();
+        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => cell.vertex && cell.movable);
+
+        layout.vertexArray = movableCells;
+        layout.forceConstant = 200 + movableCells.length * 30;
+
         graph.getModel().beginUpdate();
         try {
             layout.execute(parent);
+            graph.fit();
         } finally {
             graph.getModel().endUpdate();
         }
