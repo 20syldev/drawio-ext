@@ -113,7 +113,7 @@ Draw.loadPlugin(function (ui) {
 
             return { devices, links: formattedLinks, deviceConnections };
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching graph data:", error);
             return { devices: [], links: [], deviceConnections: {} };
         }
     }
@@ -292,7 +292,7 @@ Draw.loadPlugin(function (ui) {
             const sourceLabel = new mxCell(
                 sourcePort,
                 new mxGeometry(-0.5, -0.5, 0, 0),
-                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=default;'
+                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=default;labelBorderColor=white;'
             );
             sourceLabel.vertex = true;
             sourceLabel.geometry.relative = true;
@@ -304,7 +304,7 @@ Draw.loadPlugin(function (ui) {
             const targetLabel = new mxCell(
                 targetPort,
                 new mxGeometry(0.5, 0.5, 0, 0),
-                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=default;'
+                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=default;labelBorderColor=white;'
             );
             targetLabel.vertex = true;
             targetLabel.geometry.relative = true;
