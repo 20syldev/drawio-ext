@@ -19,6 +19,7 @@ Draw.loadPlugin(function (ui) {
             if (value && value.nodeName === 'object') {
                 baseAPI = value.getAttribute('base-api')?.replace(/\/$/, '') || '';
                 yanaEntity = value.getAttribute('yana-entity')?.replace(/\/$/, '') || '';
+                console.log('Base API:', baseAPI, 'Entity:', yanaEntity);
             }
         });
     });
@@ -154,6 +155,8 @@ Draw.loadPlugin(function (ui) {
 
         const apiDevices = `${baseAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${baseAPI}/entity/${yanaEntity}/dump?table=snei`;
+
+        console.log('Fetching data from:', apiDevices, apiLinks);
 
         try {
             const formattedLinks = [];
