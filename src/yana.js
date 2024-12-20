@@ -401,10 +401,10 @@ Draw.loadPlugin(function (ui) {
     function organicLayout(graph) {
         const layout = new mxFastOrganicLayout(graph);
         const parent = graph.getDefaultParent();
-        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => cell.vertex && cell.movable);
+        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => graph.isCellMovable(cell));
 
         layout.vertexArray = movableCells;
-        layout.forceConstant = 200 + movableCells.length * 30;
+        layout.forceConstant = 200;
 
         graph.getModel().beginUpdate();
         try {
