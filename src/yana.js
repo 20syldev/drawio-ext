@@ -31,7 +31,7 @@ Draw.loadPlugin(function (ui) {
     toolbar.addMenuFunction('Load', 'Load graph', true, loadGraph, toolbar.container);
     toolbar.addMenuFunction('Re-update', 'Update graph', true, updateGraph, toolbar.container);
     toolbar.addMenuFunction('Reset', 'Reset graph', true, resetGraph, toolbar.container);
-    toolbar.addMenuFunction('Layout', 'Apply layout to graph', true, () => organicLayout(graph), toolbar.container);
+    toolbar.addMenuFunction('Force Layout', 'Apply layout to non-movable & movable elements', true, () => organicLayout(graph), toolbar.container);
 
     /**
      * Opens a popup to enter a base API URL (must be HTTPS), validates it, and saves it as a custom property.
