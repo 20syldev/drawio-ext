@@ -86,41 +86,58 @@ Draw.loadPlugin(function (ui) {
     }
 
     /**
-     * Select an entity from a list and load its related data.
-     * This function fetches the available entities and shows a selection popup.
-     * After the user selects an entity, it triggers the callback to load the graph.
+     * Select an entity from a list, load its related data, and save it as a custom property.
+     * This function fetches a list of entities from the base API and allows the user to select one.
      */
     function selectEntity(callback) {
-        fetch('http://na2-api.zenetys.loc/entities')
+        if (!baseAPI) {
+            alert('Please select a base API first.');
+            return;
+        }
+
+        fetch(`${baseAPI}/entities`)
             .then(res => res.json())
             .then(entities => {
-                const popup = new mxWindow("Select Entity", document.createElement('div'), 300, 300, 250, 80, true, true);
+                const popup = new mxWindow('Select Entity', document.createElement('div'), 300, 300, 250, 80, true, true);
                 const select = document.createElement('select');
-                // Populate the select element with available entities
                 entities.forEach(entity => {
                     const option = document.createElement('option');
                     option.value = entity;
                     option.textContent = entity;
                     select.appendChild(option);
                 });
-                // Create validate and cancel buttons for entity selection
+
                 const validateBtn = document.createElement('button');
-                validateBtn.textContent = "Validate";
+                validateBtn.textContent = 'Validate';
                 validateBtn.onclick = () => {
-                    currentEntity = select.value;
+                    yanaEntity = select.value;
+                    const obj = mxUtils.createXmlDocument().createElement('object');
+                    let existingObj = graph.getModel().getValue(graph.getDefaultParent());
+
+                    if (existingObj) {
+                        if (!existingObj.getAttribute('yana-entity')) {
+                            existingObj.setAttribute('yana-entity', yanaEntity);
+                        }
+                    } else {
+                        obj.setAttribute('yana-entity', yanaEntity);
+                        graph.getModel().setValue(graph.getDefaultParent(), obj);
+                    }
+
                     popup.destroy();
                     if (callback) callback();
                 };
+
                 const cancelBtn = document.createElement('button');
-                cancelBtn.textContent = "Cancel";
+                cancelBtn.textContent = 'Cancel';
                 cancelBtn.onclick = () => popup.destroy();
+
                 const content = popup.content;
                 content.appendChild(select);
                 content.appendChild(validateBtn);
                 content.appendChild(cancelBtn);
                 popup.setVisible(true);
             })
-            .catch(err => console.error("Error fetching entities:", err));
+            .catch(err => console.error('Error fetching entities:', err));
     }
 
     /**
@@ -129,8 +146,13 @@ Draw.loadPlugin(function (ui) {
      * It processes the data and returns it in a usable format.
      */
     async function fetchData() {
-        const apiDevices = `http://na2-api.zenetys.loc/entity/${currentEntity}/devices?q=switch`;
-        const apiLinks = `http://na2-api.zenetys.loc/entity/${currentEntity}/dump?table=snei`;
+        if (!baseAPI || !yanaEntity) {
+            alert('Please select both a base API and an entity.');
+            return { devices: [], links: [], deviceConnections: {} };
+        }
+
+        const apiDevices = `${baseAPI}/entity/${yanaEntity}/devices?q=switch`;
+        const apiLinks = `${baseAPI}/entity/${yanaEntity}/dump?table=snei`;
 
         try {
             const formattedLinks = [];
@@ -180,7 +202,7 @@ Draw.loadPlugin(function (ui) {
 
             return { devices, links: formattedLinks, deviceConnections };
         } catch (error) {
-            console.error("Error fetching graph data:", error);
+            console.error('Error fetching graph data:', error);
             return { devices: [], links: [], deviceConnections: {} };
         }
     }
@@ -191,27 +213,18 @@ Draw.loadPlugin(function (ui) {
      * and then constructs the graph elements (devices and links).
      */
     function loadGraph() {
-        if (!currentEntity) return alert("No entity selected!");
+        if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
         fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
                 const switchMap = createDevices(graph, parent, devices, deviceConnections);
                 createLinks(graph, parent, switchMap, links);
-
-                const entityObject = document.createElement('object');
-                entityObject.setAttribute('label', '');
-                entityObject.setAttribute('yana-entity', currentEntity);
-                entityObject.setAttribute('id', '0');
-
-                const entityCell = new mxCell();
-                entityCell.setValue(entityObject);
-                graph.getModel().add(entityCell);
             } finally {
                 organicLayout(graph);
                 graph.getModel().endUpdate();
             }
-        }).catch(error => console.error('Error loading initial graph:', error));
+        }).catch(console.error);
     }
 
     /**
@@ -220,7 +233,7 @@ Draw.loadPlugin(function (ui) {
      * then updates the graph elements with the new data.
      */
     function updateGraph() {
-        if (!currentEntity) return alert("No entity selected!");
+        if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
 
         graph.cellsMovable = false;
         fetchData().then(({ devices, links, deviceConnections }) => {
@@ -243,7 +256,7 @@ Draw.loadPlugin(function (ui) {
      * This function resets the graph, clearing any existing cells and entity selections.
      */
     function resetGraph() {
-        currentEntity = null;
+        yanaEntity = null;
         graph.getModel().beginUpdate();
         try { graph.getModel().clear(); }
         finally { graph.getModel().endUpdate(); }
