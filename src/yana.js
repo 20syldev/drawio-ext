@@ -17,8 +17,8 @@ Draw.loadPlugin(function (ui) {
         cells.forEach(cell => {
             const value = cell.getValue();
             if (value && value.nodeName === 'object') {
-                baseAPI = value.getAttribute('base-api');
-                yanaEntity = value.getAttribute('yana-entity');
+                baseAPI = value.getAttribute('base-api')?.replace(/\/$/, '') || '';
+                yanaEntity = value.getAttribute('yana-entity')?.replace(/\/$/, '') || '';
             }
         });
     });
