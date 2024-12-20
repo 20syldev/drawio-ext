@@ -275,7 +275,10 @@ Draw.loadPlugin(function (ui) {
                 const connectionCount = deviceConnections[device.id];
                 const fontSize = Math.min(8 + connectionCount * 0.25, 20);
 
-                const text = `${device.name}\n${device.ip[0]}`;
+                const name = device.name?.[0]?.split('.')[0] || 'Undefined';
+                const ip = device.ip?.[0] ? `\n${device.ip[0]}` : 'Undefined';
+
+                const text = `${name}${ip}`;
                 const height = Math.min(12 + connectionCount, 40);
                 const width = document.createElement('canvas').getContext('2d').measureText(text).width;
 
