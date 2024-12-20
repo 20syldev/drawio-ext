@@ -41,6 +41,7 @@ Draw.loadPlugin(function (ui) {
         const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
         const input = document.createElement('input');
         input.type = 'text';
+        input.value = baseAPI;
         input.placeholder = 'Enter API base URL (must be HTTPS)';
         input.style.width = '100%';
 
