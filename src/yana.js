@@ -271,8 +271,8 @@ Draw.loadPlugin(function (ui) {
         const switchMap = {};
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
-                const connectionCount = deviceConnections[device.id] || 0;
-                const fontSize = Math.min(6 + connectionCount * 0.5, 20);
+                const connectionCount = deviceConnections[device.id];
+                const fontSize = Math.min(8 + connectionCount * 0.25, 20);
 
                 const text = `${device.name}\n${device.ip[0]}`;
                 const height = Math.min(12 + connectionCount, 40);
@@ -286,7 +286,7 @@ Draw.loadPlugin(function (ui) {
                     0,
                     width + fontSize,
                     height + fontSize,
-                    `movable=1;fontSize=${fontSize};`
+                    `fontSize=${fontSize};`
                 );
                 switchMap[device.id] = switchVertex;
             }
