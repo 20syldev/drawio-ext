@@ -4,17 +4,34 @@
  * and visualize it as a graph in the Draw.io editor.
  */
 Draw.loadPlugin(function (ui) {
-    const graph = ui.editor.graph;  // Initialize the graph object
-    const toolbar = ui.toolbar;     // Initialize the toolbar
-    let currentEntity = null;       // Variable to store the current selected entity
+    const graph = ui.editor.graph;      // Initialize the graph object
+    const toolbar = ui.toolbar;         // Initialize the toolbar
+    let baseAPI = '', yanaEntity = '';  // Initialize base API and entity variables
 
-    // Adding menu items to the toolbar for various actions
-    toolbar.addMenuFunction("Select", "Select entity", true, () => selectEntity(), toolbar.container);
-    toolbar.addMenuFunction("Load", "Load graph", true, () => selectEntity(loadGraph), toolbar.container);
-    toolbar.addMenuFunction("Re-update", "Update graph", true, updateGraph, toolbar.container);
-    toolbar.addMenuFunction("Reset", "Reset graph", true, resetGraph, toolbar.container);
-    toolbar.addMenuFunction("Lock", "Lock cells", true, () => graph.cellsMovable = false, toolbar.container);
-    toolbar.addMenuFunction("Unlock", "Unlock cells", true, () => graph.cellsMovable = true, toolbar.container);
+    /**
+     * Await the completion of the graph editor initialization.
+     * Then add a listener to update the base API and entity variables
+     */
+    graph.getModel().addListener(mxEvent.NOTIFY, function() {
+        const cells = graph.getModel().getChildren(graph.getModel().getRoot());
+        cells.forEach(cell => {
+            const value = cell.getValue();
+            if (value && value.nodeName === 'object') {
+                baseAPI = value.getAttribute('base-api');
+                yanaEntity = value.getAttribute('yana-entity');
+            }
+        });
+    });
+
+    /**
+     * Add custom menu items to the toolbar.
+     */
+    toolbar.addMenuFunction('Select Base API', 'Select the base API to fetch data', true, () => selectBaseAPI(), toolbar.container);
+    toolbar.addMenuFunction('Select Entity', 'Select entity and load graph', true, () => selectEntity(loadGraph), toolbar.container);
+    toolbar.addMenuFunction('Load', 'Load graph', true, loadGraph, toolbar.container);
+    toolbar.addMenuFunction('Re-update', 'Update graph', true, updateGraph, toolbar.container);
+    toolbar.addMenuFunction('Reset', 'Reset graph', true, resetGraph, toolbar.container);
+    toolbar.addMenuFunction('Layout', 'Apply layout to graph', true, () => organicLayout(graph), toolbar.container);
 
     /**
      * Opens a popup to enter a base API URL (must be HTTPS), validates it, and saves it as a custom property.
@@ -52,7 +69,6 @@ Draw.loadPlugin(function (ui) {
                 graph.getModel().setValue(graph.getDefaultParent(), obj);
             }
 
-    toolbar.addMenuFunction("Layout", "Apply layout", true, () => organicLayout(graph), toolbar.container);
             popup.destroy();
 
             if (callback) callback(baseAPI);
