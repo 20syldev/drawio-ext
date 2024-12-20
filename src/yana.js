@@ -16,7 +16,58 @@ Draw.loadPlugin(function (ui) {
     toolbar.addMenuFunction("Lock", "Lock cells", true, () => graph.cellsMovable = false, toolbar.container);
     toolbar.addMenuFunction("Unlock", "Unlock cells", true, () => graph.cellsMovable = true, toolbar.container);
 
+    /**
+     * Opens a popup to enter a base API URL (must be HTTPS), validates it, and saves it as a custom property.
+     * This function prompts the user to enter a base API URL.
+     */
+    function selectBaseAPI(callback) {
+        const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Enter API base URL (must be HTTPS)';
+        input.style.width = '100%';
+
+        const validateBtn = document.createElement('button');
+        validateBtn.textContent = 'Validate';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+
+        validateBtn.onclick = () => {
+            baseAPI = input.value.trim();
+
+            if (!baseAPI || !baseAPI.startsWith('https://')) {
+                alert('Please enter a valid HTTPS URL.');
+                return;
+            }
+
+            const obj = mxUtils.createXmlDocument().createElement('object');
+            let existingObj = graph.getModel().getValue(graph.getDefaultParent());
+
+            if (existingObj) {
+                if (!existingObj.getAttribute('base-api')) {
+                    existingObj.setAttribute('base-api', baseAPI);
+                }
+            } else {
+                obj.setAttribute('base-api', baseAPI);
+                graph.getModel().setValue(graph.getDefaultParent(), obj);
+            }
+
     toolbar.addMenuFunction("Layout", "Apply layout", true, () => organicLayout(graph), toolbar.container);
+            popup.destroy();
+
+            if (callback) callback(baseAPI);
+        };
+
+        cancelBtn.onclick = () => {
+            popup.destroy();
+        };
+
+        const content = popup.content;
+        content.appendChild(input);
+        content.appendChild(validateBtn);
+        content.appendChild(cancelBtn);
+        popup.setVisible(true);
+    }
 
     /**
      * Select an entity from a list and load its related data.
