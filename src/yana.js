@@ -139,7 +139,7 @@ Draw.loadPlugin(function (ui) {
                 content.appendChild(cancelBtn);
                 popup.setVisible(true);
             })
-            .catch(err => console.error('Error fetching entities:', err));
+            .catch(err => console.error('Error fetching entities:', err) && alert('Error fetching entities.'));
     }
 
     /**
@@ -205,8 +205,9 @@ Draw.loadPlugin(function (ui) {
             });
 
             return { devices, links: formattedLinks, deviceConnections };
-        } catch (error) {
-            console.error('Error fetching graph data:', error);
+        } catch (err) {
+            console.error('Error fetching graph data:', err);
+            alert('Error fetching graph data.');
             return { devices: [], links: [], deviceConnections: {} };
         }
     }
@@ -362,7 +363,7 @@ Draw.loadPlugin(function (ui) {
      * based on the link's speed and duplex properties.
      */
     function getLinkStyle(speed, duplex) {
-        return duplex === 2 || speed <= 1000000000
+        return duplex === 2 || speed < 1000000000
             ? 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=red;endArrow=none;'
             : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;';
     }
