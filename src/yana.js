@@ -60,11 +60,11 @@ Draw.loadPlugin(function (ui) {
             }
 
             const obj = mxUtils.createXmlDocument().createElement('object');
-            let existingObj = graph.getModel().getValue(graph.getDefaultParent());
+            let parent = graph.getModel().getValue(graph.getDefaultParent());
 
-            if (existingObj) {
-                if (!existingObj.getAttribute('base-api')) {
-                    existingObj.setAttribute('base-api', baseAPI);
+            if (parent) {
+                if (!parent.getAttribute('base-api')) {
+                    parent.setAttribute('base-api', baseAPI);
                 }
             } else {
                 obj.setAttribute('base-api', baseAPI);
@@ -114,11 +114,11 @@ Draw.loadPlugin(function (ui) {
                 validateBtn.onclick = () => {
                     yanaEntity = select.value;
                     const obj = mxUtils.createXmlDocument().createElement('object');
-                    let existingObj = graph.getModel().getValue(graph.getDefaultParent());
+                    let parent = graph.getModel().getValue(graph.getDefaultParent());
 
-                    if (existingObj) {
-                        if (!existingObj.getAttribute('yana-entity')) {
-                            existingObj.setAttribute('yana-entity', yanaEntity);
+                    if (parent) {
+                        if (!parent.getAttribute('yana-entity')) {
+                            parent.setAttribute('yana-entity', yanaEntity);
                         }
                     } else {
                         obj.setAttribute('yana-entity', yanaEntity);
