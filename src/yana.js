@@ -63,7 +63,7 @@ Draw.loadPlugin(function (ui) {
             let parent = graph.getModel().getValue(graph.getDefaultParent());
 
             if (parent) {
-                if (!parent.getAttribute('base-api')) {
+                if (!parent.getAttribute('base-api') || parent.getAttribute('base-api') !== baseAPI) {
                     parent.setAttribute('base-api', baseAPI);
                 }
             } else {
@@ -117,7 +117,7 @@ Draw.loadPlugin(function (ui) {
                     let parent = graph.getModel().getValue(graph.getDefaultParent());
 
                     if (parent) {
-                        if (!parent.getAttribute('yana-entity')) {
+                        if (!parent.getAttribute('yana-entity') || parent.getAttribute('yana-entity') !== yanaEntity) {
                             parent.setAttribute('yana-entity', yanaEntity);
                         }
                     } else {
