@@ -417,7 +417,6 @@ Draw.loadPlugin(function (ui) {
         graph.getModel().beginUpdate();
         try {
             layout.execute(parent);
-            graph.fit();
         } finally {
             graph.getModel().endUpdate();
         }
