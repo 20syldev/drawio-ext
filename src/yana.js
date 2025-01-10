@@ -322,7 +322,7 @@ Draw.loadPlugin(function (ui) {
                     0,
                     width + fontSize,
                     height + fontSize,
-                    `fontSize=${fontSize};`
+                    `fontSize=${fontSize};auto-created=true;`
                 );
                 switchMap[device.id] = switchVertex;
             }
@@ -411,8 +411,8 @@ Draw.loadPlugin(function (ui) {
      */
     function getLinkStyle(speed, duplex) {
         return duplex === 2 || speed < 1000000000
-            ? 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=red;endArrow=none;'
-            : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;';
+            ? 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=red;endArrow=none;auto-created=true;'
+            : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;auto-created=true;';
     }
 
     /**
