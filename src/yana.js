@@ -41,7 +41,7 @@ Draw.loadPlugin(function (ui) {
         const rootCell = mxUtils.findNode(graphXml, 'id', '0');
 
         if (rootCell) {
-            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/$/, '') || '';
+            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || '';
             baseAPI = rootCell.getAttribute('yana.base-api')?.replace(/\/$/, '') || '';
             yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
             console.log('Live API:', liveAPI, 'Base API:', baseAPI, 'Entity:', yanaEntity);
@@ -58,7 +58,7 @@ Draw.loadPlugin(function (ui) {
         const rootCell = mxUtils.findNode(graphXml, 'id', '0');
 
         if (rootCell) {
-            if (liveAPI) rootCell.setAttribute('live.api', liveAPI);
+            if (liveAPI) rootCell.setAttribute('live.api', liveAPI + '/api');
             if (baseAPI) rootCell.setAttribute('yana.base-api', baseAPI);
             if (yanaEntity) rootCell.setAttribute('yana.entity', yanaEntity);
             ui.editor.setGraphXml(graphXml);
@@ -78,7 +78,7 @@ Draw.loadPlugin(function (ui) {
             Object.assign(input, {
                 type: 'text',
                 placeholder: ph,
-                value: ph.includes('live') ? liveAPI : baseAPI,
+                value: ph.includes('live') ? liveAPI : ph.includes('base') ? baseAPI : '',
                 style: 'width:100%; margin-bottom:5px'
             });
             return input;
