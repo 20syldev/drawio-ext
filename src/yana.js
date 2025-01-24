@@ -308,6 +308,15 @@ Draw.loadPlugin(function (ui) {
                     height + fontSize,
                     `html=1;rounded=0;fontSize=${fontSize};auto-created=true;`
                 );
+
+                const userObjectXML = `UserObject generated:
+<UserObject label="${name}" link="${liveAPI}/#/panel?level=any&amp;search=${name}" id="${name}">
+    <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" parent="1" vertex="1" live.property.fillColor="={ return cState(data.apiHosts.data.hosts[&quot;${name}&quot;]); }">
+        <mxGeometry x="0" y="0" width="${width + fontSize}" height="${height + fontSize}" as="geometry" />
+    </mxCell>
+</UserObject>`;
+                console.log(userObjectXML);
+
                 switchMap[device.id] = switchVertex;
             }
         });
