@@ -234,7 +234,7 @@ Draw.loadPlugin(function (ui) {
      * @throws {Error} - If there is an error fetching or processing the graph data.
      */
     function loadGraph() {
-        if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
+        if (!liveAPI || !baseAPI || !yanaEntity) return alert('Please select both live and base API, and an entity.');
         fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
