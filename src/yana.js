@@ -13,15 +13,7 @@ Draw.loadPlugin(function (ui) {
      * Then add a listener to update the base API and entity variables
      */
     graph.getModel().addListener(mxEvent.NOTIFY, function() {
-        const cells = graph.getModel().getChildren(graph.getModel().getRoot());
-        cells.forEach(cell => {
-            const value = cell.getValue();
-            if (value && value.nodeName === 'object') {
-                baseAPI = value.getAttribute('base-api')?.replace(/\/$/, '') || '';
-                yanaEntity = value.getAttribute('yana-entity')?.replace(/\/$/, '') || '';
-                console.log('Base API:', baseAPI, 'Entity:', yanaEntity);
-            }
-        });
+        loadAttributes();
     });
 
     /**
@@ -41,6 +33,39 @@ Draw.loadPlugin(function (ui) {
     toolbar.addMenuFunction('Force Layout', 'Apply layout to non-movable & movable elements', true, () => organicLayout(graph), toolbar.container);
 
     /**
+     * Add a listener to update the cell attributes when the graph is loaded.
+     * This function check if the cell attributes are set and updates them if necessary.
+     */
+    function loadAttributes() {
+        const graphXml = ui.editor.getGraphXml();
+        const rootCell = mxUtils.findNode(graphXml, 'id', '0');
+
+        if (rootCell) {
+            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/$/, '') || '';
+            baseAPI = rootCell.getAttribute('yana.base-api')?.replace(/\/$/, '') || '';
+            yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
+            console.log('Live API:', liveAPI, 'Base API:', baseAPI, 'Entity:', yanaEntity);
+            updateAttributes();
+        }
+    }
+
+    /**
+     * Update the cell attributes with the base API and entity values.
+     * This function fetches the root cell and updates its attributes if necessary.
+     */
+    function updateAttributes() {
+        const graphXml = ui.editor.getGraphXml();
+        const rootCell = mxUtils.findNode(graphXml, 'id', '0');
+
+        if (rootCell) {
+            if (liveAPI) rootCell.setAttribute('live.api', liveAPI);
+            if (baseAPI) rootCell.setAttribute('yana.base-api', baseAPI);
+            if (yanaEntity) rootCell.setAttribute('yana.entity', yanaEntity);
+            ui.editor.setGraphXml(graphXml);
+        }
+    }
+
+    /**
      * Opens a popup to enter a base API URL (must be HTTPS), validates it, and saves it as a custom property.
      * This function prompts the user to enter a base API URL.
      * 
@@ -48,47 +73,38 @@ Draw.loadPlugin(function (ui) {
      */
     function selectBaseAPI(callback) {
         const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = baseAPI;
-        input.placeholder = 'Enter API base URL (must be HTTPS)';
-        input.style.width = '100%';
+        const [inputKompot, inputYana] = ['Enter live API URL', 'Enter API base URL'].map(ph => {
+            const input = document.createElement('input');
+            Object.assign(input, {
+                type: 'text',
+                placeholder: ph,
+                value: ph.includes('live') ? liveAPI : baseAPI,
+                style: 'width:100%; margin-bottom:5px'
+            });
+            return input;
+        });
+        const [validateBtn, cancelBtn] = ['Validate', 'Cancel'].map(txt => {
+            const button = document.createElement('button');
+            button.textContent = txt;
+            return button;
+        });
 
-        const validateBtn = document.createElement('button');
         validateBtn.textContent = 'Validate';
-        const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
 
         validateBtn.onclick = () => {
-            baseAPI = input.value.trim();
-            const obj = mxUtils.createXmlDocument().createElement('object');
-            let parent = graph.getModel().getValue(graph.getDefaultParent());
-
-            if (parent) {
-                if (!parent.getAttribute('base-api') || parent.getAttribute('base-api') !== baseAPI) {
-                    parent.setAttribute('base-api', baseAPI);
-                }
-            } else {
-                obj.setAttribute('base-api', baseAPI);
-                graph.getModel().setValue(graph.getDefaultParent(), obj);
-            }
-
             liveAPI = inputKompot.value.trim();
+            baseAPI = inputYana.value.trim();
             if (!liveAPI) return alert('Please enter a valid live API URL.');
             if (!baseAPI) return alert('Please enter a valid base API URL.');
+            updateAttributes();
             popup.destroy();
-
             if (callback) callback(baseAPI);
         };
 
-        cancelBtn.onclick = () => {
-            popup.destroy();
-        };
-
-        const content = popup.content;
-        content.appendChild(input);
-        content.appendChild(validateBtn);
-        content.appendChild(cancelBtn);
+        cancelBtn.onclick = () => popup.destroy();
+        
+        [inputKompot, inputYana, validateBtn, cancelBtn].forEach(el => popup.content.appendChild(el));
         popup.setVisible(true);
     }
 
@@ -105,6 +121,10 @@ Draw.loadPlugin(function (ui) {
             .then(entities => {
                 const popup = new mxWindow('Select Entity', document.createElement('div'), 300, 300, 250, 80, true, true);
                 const select = document.createElement('select');
+                const validateBtn = document.createElement('button');
+                const cancelBtn = document.createElement('button');
+                const content = popup.content;
+
                 entities.forEach(entity => {
                     const option = document.createElement('option');
                     option.value = entity;
@@ -112,31 +132,18 @@ Draw.loadPlugin(function (ui) {
                     select.appendChild(option);
                 });
 
-                const validateBtn = document.createElement('button');
                 validateBtn.textContent = 'Validate';
+                cancelBtn.textContent = 'Cancel';
+
                 validateBtn.onclick = () => {
                     yanaEntity = select.value;
-                    const obj = mxUtils.createXmlDocument().createElement('object');
-                    let parent = graph.getModel().getValue(graph.getDefaultParent());
-
-                    if (parent) {
-                        if (!parent.getAttribute('yana-entity') || parent.getAttribute('yana-entity') !== yanaEntity) {
-                            parent.setAttribute('yana-entity', yanaEntity);
-                        }
-                    } else {
-                        obj.setAttribute('yana-entity', yanaEntity);
-                        graph.getModel().setValue(graph.getDefaultParent(), obj);
-                    }
-
+                    updateAttributes();
                     popup.destroy();
                     if (callback) callback();
                 };
 
-                const cancelBtn = document.createElement('button');
-                cancelBtn.textContent = 'Cancel';
                 cancelBtn.onclick = () => popup.destroy();
 
-                const content = popup.content;
                 content.appendChild(select);
                 content.appendChild(validateBtn);
                 content.appendChild(cancelBtn);
