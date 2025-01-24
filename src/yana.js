@@ -174,16 +174,13 @@ Draw.loadPlugin(function (ui) {
         console.log('Fetching data from:', apiDevices, apiLinks);
 
         try {
-            const formattedLinks = [];
             const [devices, links] = await Promise.all([
                 fetch(apiDevices).then(res => res.json()),
                 fetch(apiLinks).then(res => res.json())
             ]);
 
             const switches = devices.reduce((acc, device) => {
-                if (device.id && device.iface) {
-                    acc[device.id] = device.iface;
-                }
+                if (device.id && device.iface) acc[device.id] = device.iface;
                 return acc;
             }, {});
 
@@ -192,32 +189,20 @@ Draw.loadPlugin(function (ui) {
                 return acc;
             }, {});
 
-            Object.entries(links).forEach(([switchId, ports]) => {
-                Object.entries(ports).forEach(([port, portLinks]) => {
-                    portLinks.forEach(link => {
-                        if (link.id !== switchId) {
-                            const targetIface = switches[link.id] ? switches[link.id][link.ifname] : null;
-
-                            if (targetIface) {
-                                const speed = targetIface.speed || 0;
-                                const duplex = targetIface.duplex || 0;
-
-                                formattedLinks.push({
-                                    sourceId: switchId,
-                                    targetId: link.id,
-                                    sourcePort: port,
-                                    targetPort: link.ifname,
-                                    speed: speed,
-                                    duplex: duplex
-                                });
-
-                                deviceConnections[switchId]++;
-                                deviceConnections[link.id]++;
-                            }
+            const formattedLinks = Object.entries(links).flatMap(([switchId, ports]) =>
+                Object.entries(ports).flatMap(([port, portLinks]) =>
+                    portLinks.filter(link => link.id !== switchId).map(link => {
+                        const targetIface = switches[link.id]?.[link.ifname];
+                        if (targetIface) {
+                            const speed = targetIface.speed || 0;
+                            const duplex = targetIface.duplex || 0;
+                            deviceConnections[switchId]++;
+                            deviceConnections[link.id]++;
+                            return { sourceId: switchId, targetId: link.id, sourcePort: port, targetPort: link.ifname, speed, duplex };
                         }
-                    });
-                });
-            });
+                    }).filter(Boolean)
+                )
+            );
 
             return { devices, links: formattedLinks, deviceConnections };
         } catch (err) {
