@@ -97,11 +97,7 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
     function selectEntity(callback) {
-        if (!baseAPI) {
-            alert('Please select a base API first.');
-            return;
-        }
-
+        if (!baseAPI) return alert('Please select both live and base API URLs first.');
         fetch(`${baseAPI}/entities`)
             .then(res => res.json())
             .then(entities => {
@@ -144,7 +140,10 @@ Draw.loadPlugin(function (ui) {
                 content.appendChild(cancelBtn);
                 popup.setVisible(true);
             })
-            .catch(err => console.error('Error fetching entities:', err) && alert('Error fetching entities.'));
+            .catch(err => {
+                console.error('Error fetching entities:', err); 
+                return alert('Error fetching entities.');
+            });
     }
 
     /**
@@ -158,10 +157,7 @@ Draw.loadPlugin(function (ui) {
      *    - deviceConnections: An object mapping device IDs to the number of connections they have.
      */
     async function fetchData() {
-        if (!baseAPI || !yanaEntity) {
-            alert('Please select both a base API and an entity.');
-            return { devices: [], links: [], deviceConnections: {} };
-        }
+        if (!baseAPI || !yanaEntity) return alert('Please select both base API and entity.');
 
         const apiDevices = `${baseAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${baseAPI}/entity/${yanaEntity}/dump?table=snei`;
@@ -217,8 +213,7 @@ Draw.loadPlugin(function (ui) {
             return { devices, links: formattedLinks, deviceConnections };
         } catch (err) {
             console.error('Error fetching graph data:', err);
-            alert('Error fetching graph data.');
-            return { devices: [], links: [], deviceConnections: {} };
+            return alert('Error fetching graph data.');
         }
     }
 
@@ -227,7 +222,7 @@ Draw.loadPlugin(function (ui) {
      * This function retrieves devices and links related to the selected entity 
      * and then constructs the graph elements (devices and links).
      * 
-     * @throws {Error} If there is an error fetching or processing the graph data.
+     * @throws {Error} - If there is an error fetching or processing the graph data.
      */
     function loadGraph() {
         if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
@@ -249,7 +244,7 @@ Draw.loadPlugin(function (ui) {
      * This function fetches the latest devices and links, 
      * then updates the graph elements with the new data.
      * 
-     * @throws {Error} If there is an error fetching or processing the graph data.
+     * @throws {Error} - If there is an error fetching or processing the graph data.
      */
     function updateGraph() {
         if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
@@ -274,7 +269,7 @@ Draw.loadPlugin(function (ui) {
      * Reset the graph (clear everything).
      * This function resets the graph, clearing any existing cells and entity selections.
      * 
-     * @throws {Error} If there is an error while clearing the graph.
+     * @throws {Error} - If there is an error while clearing the graph.
      */
     function resetGraph() {
         yanaEntity = null;
