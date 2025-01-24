@@ -4,9 +4,9 @@
  * and visualize it as a graph in the Draw.io editor.
  */
 Draw.loadPlugin(function (ui) {
-    const graph = ui.editor.graph;      // Initialize the graph object
-    const toolbar = ui.toolbar;         // Initialize the toolbar
-    let baseAPI = '', yanaEntity = '';  // Initialize base API and entity variables
+    const graph = ui.editor.graph;                      // Initialize the graph object
+    const toolbar = ui.toolbar;                         // Initialize the toolbar
+    let liveAPI = '', baseAPI = '', yanaEntity = '';    // Initialize live API, base API and entity variables
 
     /**
      * Await the completion of the graph editor initialization.
@@ -73,6 +73,8 @@ Draw.loadPlugin(function (ui) {
                 graph.getModel().setValue(graph.getDefaultParent(), obj);
             }
 
+            liveAPI = inputKompot.value.trim();
+            if (!liveAPI) return alert('Please enter a valid live API URL.');
             if (!baseAPI) return alert('Please enter a valid base API URL.');
             popup.destroy();
 
@@ -97,7 +99,7 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
     function selectEntity(callback) {
-        if (!baseAPI) return alert('Please select both live and base API URLs first.');
+        if (!liveAPI || !baseAPI) return alert('Please select both live and base API URLs first.');
         fetch(`${baseAPI}/entities`)
             .then(res => res.json())
             .then(entities => {
@@ -157,7 +159,7 @@ Draw.loadPlugin(function (ui) {
      *    - deviceConnections: An object mapping device IDs to the number of connections they have.
      */
     async function fetchData() {
-        if (!baseAPI || !yanaEntity) return alert('Please select both base API and entity.');
+        if (!liveAPI || !baseAPI || !yanaEntity) return alert('Please select both live and base API, and an entity.');
 
         const apiDevices = `${baseAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${baseAPI}/entity/${yanaEntity}/dump?table=snei`;
