@@ -61,12 +61,6 @@ Draw.loadPlugin(function (ui) {
 
         validateBtn.onclick = () => {
             baseAPI = input.value.trim();
-
-            if (!baseAPI || !baseAPI.startsWith('https://')) {
-                alert('Please enter a valid HTTPS URL.');
-                return;
-            }
-
             const obj = mxUtils.createXmlDocument().createElement('object');
             let parent = graph.getModel().getValue(graph.getDefaultParent());
 
@@ -79,6 +73,7 @@ Draw.loadPlugin(function (ui) {
                 graph.getModel().setValue(graph.getDefaultParent(), obj);
             }
 
+            if (!baseAPI) return alert('Please enter a valid base API URL.');
             popup.destroy();
 
             if (callback) callback(baseAPI);
