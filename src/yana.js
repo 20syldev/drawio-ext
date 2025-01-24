@@ -321,7 +321,7 @@ Draw.loadPlugin(function (ui) {
                     0,
                     width + fontSize,
                     height + fontSize,
-                    `fontSize=${fontSize};auto-created=true;`
+                    `html=1;rounded=0;fontSize=${fontSize};auto-created=true;`
                 );
                 switchMap[device.id] = switchVertex;
             }
