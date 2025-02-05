@@ -332,8 +332,8 @@ Draw.loadPlugin(function (ui) {
                 );
 
                 const userObjectXML = `UserObject generated:
-<UserObject label="${name}" link="${liveAPI}/#/panel?level=any&amp;search=${name}" id="${name}">
-    <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" parent="1" vertex="1" live.property.fillColor="={ return cState(data.apiHosts.data.hosts[&quot;${name}&quot;]); }">
+<UserObject label="${name}" link="${liveAPI}#/panel?level=any&amp;search=${name}" live.data="/hosts" live.id="apiHosts" live.property.fillColor="={ return cState(data.apiHosts.data.hosts[&quot;${name}&quot;]); }" id="${name}">
+    <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=white;" parent="1" vertex="1">
         <mxGeometry x="0" y="0" width="${width + fontSize}" height="${height + fontSize}" as="geometry" />
     </mxCell>
 </UserObject>`;
