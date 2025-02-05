@@ -316,7 +316,7 @@ Draw.loadPlugin(function (ui) {
                 const connectionCount = deviceConnections[device.id];
                 const fontSize = Math.min(8 + connectionCount * 0.25, 20);
 
-                const name = device.name?.[0]?.split('.')[0] || 'Undefined';
+                const name = device.name?.[0]?.split('.')[0] || device.id || 'Undefined';
                 const ip = device.ip?.[0] ? `\n${device.ip[0]}` : 'Undefined';
 
                 const text = `${name}${ip}`;
