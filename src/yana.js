@@ -77,8 +77,8 @@ Draw.loadPlugin(function (ui) {
      * 
      * @param {function} callback - A callback function to be called with the YaNa API URL after it's validated and set.
      */
-    function selectBaseAPI(callback) {
         const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
+    function selectAPIs(callback) {
         const [inputKompot, inputYana] = ['Enter live API URL', 'Enter YaNa API URL'].map(ph => {
             const input = document.createElement('input');
             Object.assign(input, {
