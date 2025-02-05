@@ -6,6 +6,7 @@
 Draw.loadPlugin(function (ui) {
     const graph = ui.editor.graph;                      // Initialize the graph object
     const toolbar = ui.toolbar;                         // Initialize the toolbar
+    let popup;                                          // Initialize the popup object
     let liveAPI = '', yanaAPI = '', yanaEntity = '';    // Initialize live API, YaNa API and entity variables
 
     /**
@@ -77,8 +78,11 @@ Draw.loadPlugin(function (ui) {
      * 
      * @param {function} callback - A callback function to be called with the YaNa API URL after it's validated and set.
      */
-        const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
     function selectAPIs(callback) {
+        if (popup) return;
+
+        popup = new mxWindow('Select live and YaNa APIs', document.createElement('div'), 300, 300, 300, 120, true, true);
+
         const [inputKompot, inputYana] = ['Enter live API URL', 'Enter YaNa API URL'].map(ph => {
             const input = document.createElement('input');
             Object.assign(input, {
@@ -105,10 +109,14 @@ Draw.loadPlugin(function (ui) {
             if (!yanaAPI) return alert('Please enter a valid YaNa API URL.');
             updateAttributes();
             popup.destroy();
+            popup = null;
             if (callback) callback(yanaAPI);
         };
 
-        cancelBtn.onclick = () => popup.destroy();
+        cancelBtn.onclick = () => {
+            popup.destroy();
+            popup = null;
+        };
         
         [inputKompot, inputYana, validateBtn, cancelBtn].forEach(el => popup.content.appendChild(el));
         popup.setVisible(true);
@@ -121,12 +129,14 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
     function selectEntity(callback) {
+        if (popup) return;
         if (!liveAPI || !yanaAPI) return alert('Please select both live and YaNa API URLs first.');
 
         fetch(`${yanaAPI}/entities`)
             .then(res => res.json())
             .then(entities => {
-                const popup = new mxWindow('Select Entity', document.createElement('div'), 300, 300, 250, 80, true, true);
+                popup = new mxWindow('Select Entity', document.createElement('div'), 300, 300, 250, 80, true, true);
+
                 const select = document.createElement('select');
                 const validateBtn = document.createElement('button');
                 const cancelBtn = document.createElement('button');
@@ -146,10 +156,14 @@ Draw.loadPlugin(function (ui) {
                     yanaEntity = select.value;
                     updateAttributes();
                     popup.destroy();
+                    popup = null;
                     if (callback) callback();
                 };
 
-                cancelBtn.onclick = () => popup.destroy();
+                cancelBtn.onclick = () => {
+                    popup.destroy();
+                    popup = null;
+                };
 
                 content.appendChild(select);
                 content.appendChild(validateBtn);
