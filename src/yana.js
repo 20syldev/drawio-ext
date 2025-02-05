@@ -10,7 +10,7 @@ Draw.loadPlugin(function (ui) {
 
     /**
      * Await the completion of the graph editor initialization.
-     * Then add a listener to update the base API and entity variables
+     * Then add a listener to update the live API, YaNa API and entity values.
      */
     graph.getModel().addListener(mxEvent.NOTIFY, function() {
         loadAttributes();
@@ -25,7 +25,7 @@ Draw.loadPlugin(function (ui) {
      * @param {Function} callback - The callback function to execute when the menu item is clicked.
      * @param {HTMLElement} container - The container to add the menu item to.
      */
-    toolbar.addMenuFunction('Select Base API', 'Select the base API to fetch data', true, () => selectBaseAPI(), toolbar.container);
+    toolbar.addMenuFunction('Select APIs', 'Select the base APIs to fetch data', true, () => selectAPIs(), toolbar.container);
     toolbar.addMenuFunction('Select Entity', 'Select entity and load graph', true, () => selectEntity(loadGraph), toolbar.container);
     toolbar.addMenuFunction('Load', 'Load graph', true, loadGraph, toolbar.container);
     toolbar.addMenuFunction('Re-update', 'Update graph', true, updateGraph, toolbar.container);
@@ -50,7 +50,7 @@ Draw.loadPlugin(function (ui) {
     }
 
     /**
-     * Update the cell attributes with the base API and entity values.
+     * Update the cell attributes with the live API, YaNa API and entity values.
      * This function fetches the root cell and updates its attributes if necessary.
      */
     function updateAttributes() {
@@ -66,19 +66,19 @@ Draw.loadPlugin(function (ui) {
     }
 
     /**
-     * Opens a popup to enter a base API URL (must be HTTPS), validates it, and saves it as a custom property.
-     * This function prompts the user to enter a base API URL.
+     * Opens a popup to enter a live API URL and a YaNa API URL. Then it updates the graph with custom properties.
+     * This function allows the user to fill two input fields.
      * 
-     * @param {function} callback - A callback function to be called with the base API URL after it's validated and set.
+     * @param {function} callback - A callback function to be called with the YaNa API URL after it's validated and set.
      */
     function selectBaseAPI(callback) {
         const popup = new mxWindow('Select Base API', document.createElement('div'), 300, 300, 300, 120, true, true);
-        const [inputKompot, inputYana] = ['Enter live API URL', 'Enter API base URL'].map(ph => {
+        const [inputKompot, inputYana] = ['Enter live API URL', 'Enter YaNa API URL'].map(ph => {
             const input = document.createElement('input');
             Object.assign(input, {
                 type: 'text',
                 placeholder: ph,
-                value: ph.includes('live') ? liveAPI : ph.includes('base') ? baseAPI : '',
+                value: ph.includes('live') ? liveAPI : ph.includes('YaNa') ? yanaAPI : '',
                 style: 'width:100%; margin-bottom:5px'
             });
             return input;
@@ -110,7 +110,7 @@ Draw.loadPlugin(function (ui) {
 
     /**
      * Select an entity from a list, load its related data, and save it as a custom property.
-     * This function fetches a list of entities from the base API and allows the user to select one.
+     * This function fetches a list of entities from the YaNa API and allows the user to select one.
      * 
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
