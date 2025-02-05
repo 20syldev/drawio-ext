@@ -308,8 +308,8 @@ Draw.loadPlugin(function (ui) {
 
                 const switchVertex = graph.insertVertex(
                     parent,
-                    device.id,
-                    text,
+                    device.name?.[0] || device.id || 'Undefined',
+                    text ? text : 'Undefined',
                     0,
                     0,
                     width + fontSize,
