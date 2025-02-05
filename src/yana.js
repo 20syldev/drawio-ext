@@ -44,7 +44,10 @@ Draw.loadPlugin(function (ui) {
             liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || '';
             yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || '';
             yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
-            console.log('Live API:', liveAPI, 'Base API:', baseAPI, 'Entity:', yanaEntity);
+            console.log(' - Live API:', liveAPI || 'Undefined ;',
+                        '\n - YaNa API:', yanaAPI || 'Undefined ;',
+                        '\n - Entity:', yanaEntity || 'Undefined'
+            );
         }
     }
 
@@ -60,6 +63,10 @@ Draw.loadPlugin(function (ui) {
             if (liveAPI) rootCell.setAttribute('live.api', liveAPI + '/api');
             if (yanaAPI) rootCell.setAttribute('yana.api', yanaAPI);
             if (yanaEntity) rootCell.setAttribute('yana.entity', yanaEntity);
+            console.log(' - Live API:', liveAPI || 'Undefined ;',
+                        '\n - YaNa API:', yanaAPI || 'Undefined ;',
+                        '\n - Entity:', yanaEntity || 'Undefined'
+            );
             ui.editor.setGraphXml(graphXml);
         }
     }
