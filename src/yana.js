@@ -178,7 +178,7 @@ Draw.loadPlugin(function (ui) {
         const apiDevices = `${yanaAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${yanaAPI}/entity/${yanaEntity}/dump?table=snei`;
 
-        console.log('Fetching data from:', apiDevices, apiLinks);
+        console.log('Fetching data from:\n -', apiDevices, '\n -', apiLinks);
 
         try {
             const [devices, links] = await Promise.all([
