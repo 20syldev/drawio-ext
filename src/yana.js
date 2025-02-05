@@ -275,7 +275,6 @@ Draw.loadPlugin(function (ui) {
      * @throws {Error} - If there is an error while clearing the graph.
      */
     function resetGraph() {
-        yanaEntity = null;
         graph.getModel().beginUpdate();
         try { graph.getModel().clear(); }
         finally { graph.getModel().endUpdate(); }
