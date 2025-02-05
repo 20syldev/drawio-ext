@@ -117,7 +117,7 @@ Draw.loadPlugin(function (ui) {
             popup.destroy();
             popup = null;
         };
-        
+
         [inputKompot, inputYana, validateBtn, cancelBtn].forEach(el => popup.content.appendChild(el));
         popup.setVisible(true);
     }
@@ -308,6 +308,9 @@ Draw.loadPlugin(function (ui) {
      */
     function createDevices(graph, parent, devices, deviceConnections = {}) {
         const switchMap = {};
+        const doc = mxUtils.createXmlDocument();
+        let firstObject = true;
+
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
                 const connectionCount = deviceConnections[device.id];
@@ -320,24 +323,28 @@ Draw.loadPlugin(function (ui) {
                 const height = Math.min(12 + connectionCount, 40);
                 const width = document.createElement('canvas').getContext('2d').measureText(text).width;
 
+                const userObject = doc.createElement('UserObject');
+                userObject.setAttribute('label', text);
+                userObject.setAttribute('link', `${liveAPI}#/panel?level=any&search=${name}`);
+                userObject.setAttribute('id', name);
+                userObject.setAttribute('live.property.fillColor', `={ return cState(data.apiHosts.data.hosts["${name}"]); }`);
+
+                if (firstObject) {
+                    userObject.setAttribute('live.data', '/hosts');
+                    userObject.setAttribute('live.id', 'apiHosts');
+                    firstObject = false;
+                }
+
                 const switchVertex = graph.insertVertex(
                     parent,
-                    device.name?.[0] || device.id || 'Undefined',
-                    text ? text : 'Undefined',
-                    0,
-                    0,
+                    null,
+                    userObject,
+                    20,
+                    20,
                     width + fontSize,
                     height + fontSize,
-                    `html=1;rounded=0;fontSize=${fontSize};auto-created=true;`
+                    `html=1;rounded=0;fontSize=${fontSize};auto-created=true;fillColor=white;`
                 );
-
-                const userObjectXML = `UserObject generated:
-<UserObject label="${name}" link="${liveAPI}#/panel?level=any&amp;search=${name}" live.data="/hosts" live.id="apiHosts" live.property.fillColor="={ return cState(data.apiHosts.data.hosts[&quot;${name}&quot;]); }" id="${name}">
-    <mxCell style="rounded=0;whiteSpace=wrap;html=1;fillColor=white;" parent="1" vertex="1">
-        <mxGeometry x="0" y="0" width="${width + fontSize}" height="${height + fontSize}" as="geometry" />
-    </mxCell>
-</UserObject>`;
-                console.log(userObjectXML);
 
                 switchMap[device.id] = switchVertex;
             }
