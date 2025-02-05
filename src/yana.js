@@ -6,7 +6,7 @@
 Draw.loadPlugin(function (ui) {
     const graph = ui.editor.graph;                      // Initialize the graph object
     const toolbar = ui.toolbar;                         // Initialize the toolbar
-    let liveAPI = '', baseAPI = '', yanaEntity = '';    // Initialize live API, base API and entity variables
+    let liveAPI = '', yanaAPI = '', yanaEntity = '';    // Initialize live API, YaNa API and entity variables
 
     /**
      * Await the completion of the graph editor initialization.
@@ -42,7 +42,7 @@ Draw.loadPlugin(function (ui) {
 
         if (rootCell) {
             liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || '';
-            baseAPI = rootCell.getAttribute('yana.base-api')?.replace(/\/$/, '') || '';
+            yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || '';
             yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
             console.log('Live API:', liveAPI, 'Base API:', baseAPI, 'Entity:', yanaEntity);
             updateAttributes();
@@ -59,7 +59,7 @@ Draw.loadPlugin(function (ui) {
 
         if (rootCell) {
             if (liveAPI) rootCell.setAttribute('live.api', liveAPI + '/api');
-            if (baseAPI) rootCell.setAttribute('yana.base-api', baseAPI);
+            if (yanaAPI) rootCell.setAttribute('yana.api', yanaAPI);
             if (yanaEntity) rootCell.setAttribute('yana.entity', yanaEntity);
             ui.editor.setGraphXml(graphXml);
         }
@@ -94,12 +94,12 @@ Draw.loadPlugin(function (ui) {
 
         validateBtn.onclick = () => {
             liveAPI = inputKompot.value.trim();
-            baseAPI = inputYana.value.trim();
+            yanaAPI = inputYana.value.trim();
             if (!liveAPI) return alert('Please enter a valid live API URL.');
-            if (!baseAPI) return alert('Please enter a valid base API URL.');
+            if (!yanaAPI) return alert('Please enter a valid YaNa API URL.');
             updateAttributes();
             popup.destroy();
-            if (callback) callback(baseAPI);
+            if (callback) callback(yanaAPI);
         };
 
         cancelBtn.onclick = () => popup.destroy();
@@ -115,8 +115,9 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
     function selectEntity(callback) {
-        if (!liveAPI || !baseAPI) return alert('Please select both live and base API URLs first.');
-        fetch(`${baseAPI}/entities`)
+        if (!liveAPI || !yanaAPI) return alert('Please select both live and YaNa API URLs first.');
+
+        fetch(`${yanaAPI}/entities`)
             .then(res => res.json())
             .then(entities => {
                 const popup = new mxWindow('Select Entity', document.createElement('div'), 300, 300, 250, 80, true, true);
@@ -166,10 +167,10 @@ Draw.loadPlugin(function (ui) {
      *    - deviceConnections: An object mapping device IDs to the number of connections they have.
      */
     async function fetchData() {
-        if (!liveAPI || !baseAPI || !yanaEntity) return alert('Please select both live and base API, and an entity.');
+        if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
 
-        const apiDevices = `${baseAPI}/entity/${yanaEntity}/devices?q=switch`;
-        const apiLinks = `${baseAPI}/entity/${yanaEntity}/dump?table=snei`;
+        const apiDevices = `${yanaAPI}/entity/${yanaEntity}/devices?q=switch`;
+        const apiLinks = `${yanaAPI}/entity/${yanaEntity}/dump?table=snei`;
 
         console.log('Fetching data from:', apiDevices, apiLinks);
 
@@ -219,7 +220,8 @@ Draw.loadPlugin(function (ui) {
      * @throws {Error} - If there is an error fetching or processing the graph data.
      */
     function loadGraph() {
-        if (!liveAPI || !baseAPI || !yanaEntity) return alert('Please select both live and base API, and an entity.');
+        if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
+
         fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
@@ -241,9 +243,10 @@ Draw.loadPlugin(function (ui) {
      * @throws {Error} - If there is an error fetching or processing the graph data.
      */
     function updateGraph() {
-        if (!yanaEntity || !baseAPI) return alert('Please select both a base API and an entity.');
+        if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
 
         graph.cellsMovable = false;
+
         fetchData().then(({ devices, links, deviceConnections }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
@@ -361,6 +364,7 @@ Draw.loadPlugin(function (ui) {
             if (!processedLinks.has(linkKey) && !processedLinks.has(reverseLinkKey)) {
                 const sourceSwitch = switchMap[link.sourceId];
                 const targetSwitch = switchMap[link.targetId];
+
                 if (sourceSwitch && targetSwitch) {
                     const edge = graph.insertEdge(
                         parent,
