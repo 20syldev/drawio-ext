@@ -45,7 +45,6 @@ Draw.loadPlugin(function (ui) {
             yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || '';
             yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
             console.log('Live API:', liveAPI, 'Base API:', baseAPI, 'Entity:', yanaEntity);
-            updateAttributes();
         }
     }
 
