@@ -4,10 +4,10 @@
  * and visualize it as a graph in the Draw.io editor.
  */
 Draw.loadPlugin(function (ui) {
-    const graph = ui.editor.graph;                      // Initialize the graph object
-    const toolbar = ui.toolbar;                         // Initialize the toolbar
-    let popup;                                          // Initialize the popup object
-    let liveAPI = '', yanaAPI = '', yanaEntity = '';    // Initialize live API, YaNa API and entity variables
+    const graph = ui.editor.graph;                     // Initialize the graph object
+    const toolbar = ui.toolbar;                        // Initialize the toolbar
+    let liveAPI = '', yanaAPI = '', yanaEntity = '';   // Initialize live API, YaNa API and entity variables
+    let popup;                                         // Initialize the popup object
 
     /**
      * Await the completion of the graph editor initialization.
