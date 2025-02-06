@@ -12,6 +12,8 @@ Draw.loadPlugin(function (ui) {
     /**
      * Await the completion of the graph editor initialization.
      * Then add a listener to update the live API, YaNa API and entity values.
+     * 
+     * @param {function} callback - A callback function to be called after the graph editor is initialized.
      */
     graph.getModel().addListener(mxEvent.NOTIFY, function() {
         loadAttributes();
