@@ -327,8 +327,9 @@ Draw.loadPlugin(function (ui) {
                 userObject.setAttribute('label', text);
                 userObject.setAttribute('link', `${liveAPI}#/panel?level=any&search=${name}`);
                 userObject.setAttribute('id', name);
-                userObject.setAttribute('live.property.fillColor', `={ return cState(data.apiHosts.data.hosts["${name}"]); }`);
-
+                userObject.setAttribute('live.property.fillColor', `={ return cState(data.apiHosts.data.hosts["${name}"]).fillColor; }`);
+                userObject.setAttribute('live.property.fontColor', `={ return cState(data.apiHosts.data.hosts["${name}"]).fontColor; }`);
+                
                 if (firstObject) {
                     userObject.setAttribute('live.data', '/hosts');
                     userObject.setAttribute('live.id', 'apiHosts');
