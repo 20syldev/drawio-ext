@@ -42,8 +42,8 @@ Draw.loadPlugin(function (ui) {
         const rootCell = mxUtils.findNode(graphXml, 'id', '0');
 
         if (rootCell) {
-            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || '';
-            yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || '';
+            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || 'https://tools.zenetys.com/kompot';
+            yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || 'https://tools.zenetys.com/yana-core/v1';
             yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
             console.log(' - Live API:', liveAPI || 'Undefined ;',
                         '\n - YaNa API:', yanaAPI || 'Undefined ;',
