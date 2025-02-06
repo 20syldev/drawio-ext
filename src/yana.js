@@ -11,6 +11,19 @@ Draw.loadPlugin(function (ui) {
     let popup;                                            // Initialize the popup object
 
     /**
+     * Set the font styles for the graph elements. Default values can be changed here.
+     * This function need a size parameter to set the font size.
+     * 
+     * @param {number} size - The font size to apply to the graph elements.
+     */
+    const fontStyles = (size) => {
+        const fontWeight = '400';
+        const fontFamily = 'Montserrat';
+        const fontSource = `https://fonts.googleapis.com/css2?family=${fontFamily}:ital,wght@0,${fontWeight}`;
+        return `fontSize=${size};fontFamily=${fontFamily};fontSource=${fontSource};`;
+    };
+
+    /**
      * Await the completion of the graph editor initialization.
      * Then add a listener to update the live API, YaNa API and entity values.
      * 
