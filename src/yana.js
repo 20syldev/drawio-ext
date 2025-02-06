@@ -360,7 +360,7 @@ Draw.loadPlugin(function (ui) {
                     20,
                     width + fontSize,
                     height + fontSize,
-                    `html=1;rounded=0;fontSize=${fontSize};auto-created=true;fillColor=white;`
+                    `${base}fillColor=white;${fontStyles(fontSize)}`
                 );
 
                 switchMap[device.id] = switchVertex;
@@ -451,8 +451,8 @@ Draw.loadPlugin(function (ui) {
      */
     function getLinkStyle(speed, duplex) {
         return duplex === 2 || speed < 1000000000
-            ? 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=red;endArrow=none;auto-created=true;'
-            : 'html=1;rounded=0;fontSize=0;labelBackgroundColor=default;strokeColor=black;endArrow=none;auto-created=true;';
+            ? `${base}strokeColor=red;endArrow=none;`
+            : `${base}strokeColor=black;endArrow=none;`;
     }
 
     /**
@@ -468,12 +468,13 @@ Draw.loadPlugin(function (ui) {
     function addPortLabels(graph, edge, sourcePort, targetPort, linkKey) {
         const existingSourceLabel = graph.getModel().getCell(`${linkKey}-source`);
         const existingTargetLabel = graph.getModel().getCell(`${linkKey}-target`);
+        const style = `${base}edgeLabel;resizable=0;align=center;verticalAlign=middle;labelBorderColor=white;points=[];${fontStyles(8)}`
 
         if (!existingSourceLabel) {
             const sourceLabel = new mxCell(
                 sourcePort,
                 new mxGeometry(-0.5, -0.5, 0, 0),
-                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=white;labelBorderColor=white;'
+                style
             );
             sourceLabel.vertex = true;
             sourceLabel.geometry.relative = true;
@@ -485,7 +486,7 @@ Draw.loadPlugin(function (ui) {
             const targetLabel = new mxCell(
                 targetPort,
                 new mxGeometry(0.5, 0.5, 0, 0),
-                'edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;labelBackgroundColor=white;labelBorderColor=white;'
+                style
             );
             targetLabel.vertex = true;
             targetLabel.geometry.relative = true;
