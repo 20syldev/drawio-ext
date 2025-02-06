@@ -313,7 +313,7 @@ Draw.loadPlugin(function (ui) {
 
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
-                const connectionCount = deviceConnections[device.id];
+                const connectionCount = deviceConnections[device.id] || deviceConnections[device.name?.[0]?.split('.')[0]] || 0;
                 const fontSize = Math.min(8 + connectionCount * 0.25, 20);
 
                 const name = device.name?.[0]?.split('.')[0] || device.id || 'Undefined';
