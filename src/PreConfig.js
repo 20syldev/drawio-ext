@@ -51,9 +51,9 @@ function cState2(h,s) {
 function cState(d) {
   const BLACK = "#000000";
   const WHITE= "#FFFFFF";
-  const GREEN = "#42a15d";
+  const GREEN = "#42A15D";
   const ORANGE = "#F57C00";
-  const RED = "#E53935";
+  const RED = "#F7514D";
   const GREY = "#A0A0A0";
   const BLUE = "#80D8FF";
   const st = {
