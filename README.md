@@ -61,7 +61,7 @@ To enable the desired functionalities, modify the `PreConfig.js` and `PostConfig
 ### Plugin Workflow
 
 1. **Select the Base APIs:**
-   The plugin will prompt you to enter the URLs of the live and YaNa APIs. For the live API, you need to have `/api` at the end of the URL. For the YaNa API, you need to have `/entities` to fetch a list of entities, and `/entity` at the end of the URL.
+   The plugin will prompt you to enter the URLs of the live and YaNa APIs. For the live API, you need to have `/api` at the end of the URL. For the YaNa API, you need to have `/interfaces` to fetch detailed information about the vlan and, the tagged and untagged ports. Also, you need to have `/entities` to fetch a list of entities, and `/entity` to fetch an entity, at the end of the URL.
 
 2. **Select an Entity:**
    Once the live and YaNa APIs are set, the plugin will allow you to choose an entity (such as a network or device group) from the available options.
