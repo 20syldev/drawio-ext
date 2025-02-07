@@ -466,11 +466,11 @@ Draw.loadPlugin(function (ui) {
      * @param {string} linkKey - A unique key identifying the link (used to differentiate source and target labels).
      */
     function addPortLabels(graph, edge, sourcePort, targetPort, linkKey) {
-        const existingSourceLabel = graph.getModel().getCell(`${linkKey}-source`);
-        const existingTargetLabel = graph.getModel().getCell(`${linkKey}-target`);
         const style = `${base}edgeLabel;resizable=0;align=center;verticalAlign=middle;labelBorderColor=white;points=[];${fontStyles(8)}`
+        const sourceExist = graph.getModel().getCell(`${linkKey}-source`);
+        const targetExist = graph.getModel().getCell(`${linkKey}-target`);
 
-        if (!existingSourceLabel) {
+        if (!sourceExist) {
             const sourceLabel = new mxCell(
                 sourcePort,
                 new mxGeometry(-0.5, -0.5, 0, 0),
@@ -482,7 +482,7 @@ Draw.loadPlugin(function (ui) {
             graph.addCell(sourceLabel, edge);
         }
 
-        if (!existingTargetLabel) {
+        if (!targetExist) {
             const targetLabel = new mxCell(
                 targetPort,
                 new mxGeometry(0.5, 0.5, 0, 0),
