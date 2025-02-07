@@ -194,13 +194,14 @@ Draw.loadPlugin(function (ui) {
 
     /**
      * Fetch data for devices and links related to the selected entity.
-     * This function makes two API calls to retrieve device and link information.
+     * This function makes three API calls to retrieve device data, link data, and interface data.
      * It processes the data and returns it in a usable format.
      * 
-     * @returns {Promise<{devices: Array, links: Array, deviceConnections: Object}>} - A promise that resolves to an object containing:
-     *    - devices: An array of devices related to the selected entity.
-     *    - links: An array of formatted links connecting devices.
-     *    - deviceConnections: An object mapping device IDs to the number of connections they have.
+     * @returns {Promise<{devices: Array, links: Array, connections: Object, interfaces: Array}>} - A promise that resolves the following data:
+     *    - devices: An array of device data.
+     *    - links: An array of link data containing source, target, soure port, target port, speed, and duplex.
+     *    - connections: An object mapping device IDs to their connection count.
+     *    - interfaces: An array of interface data.
      */
     async function fetchData() {
         if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
@@ -330,9 +331,9 @@ Draw.loadPlugin(function (ui) {
      * @param {mxGraph} graph - The graph object where the devices will be created.
      * @param {mxCell} parent - The parent cell to which the devices will be added.
      * @param {Array} devices - The array of device data used to create the devices in the graph.
-     * @param {Object} [deviceConnections={}] - An optional object that maps device IDs to their connection count (default is empty).
+     * @param {Object} [connections={}] - An optional object that maps device IDs to their connection count (default is empty).
      * 
-     * @returns {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex in the graph.
+     * @returns {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      */
     function createDevices(graph, parent, devices, connections = {}) {
         const switchMap = {};
@@ -410,6 +411,7 @@ Draw.loadPlugin(function (ui) {
      * @param {mxCell} parent - The parent cell to which the edges will be added.
      * @param {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      * @param {Array} links - An array of link data used to create edges between devices.
+     * @param {Array} interfaces - An array of interface data used to add port labels to the edges.
      */
     function createLinks(graph, parent, switchMap, links, interfaces) {
         const processedLinks = new Set();
@@ -474,9 +476,11 @@ Draw.loadPlugin(function (ui) {
      * 
      * @param {mxGraph} graph - The graph object in which the edge labels will be added.
      * @param {mxCell} edge - The edge (link) to which the labels will be added.
-     * @param {string} sourcePort - The source port label to display on the edge.
-     * @param {string} targetPort - The target port label to display on the edge.
-     * @param {string} linkKey - A unique key identifying the link (used to differentiate source and target labels).
+     * @param {string} source - The ID of the source device for the link.
+     * @param {string} sPort - The source port for the link.
+     * @param {string} tPort - The target port for the link.
+     * @param {Object} swInterface - The interface data for the source device.
+     * @param {string} linkKey - The unique key for the link based on source and target device IDs.
      */
     function addPortLabels(graph, edge, source, sPort, tPort, interfaces, linkKey) {
         const sourceExist = graph.getModel().getCell(`${linkKey}-source`);
