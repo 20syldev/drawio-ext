@@ -207,13 +207,15 @@ Draw.loadPlugin(function (ui) {
 
         const apiDevices = `${yanaAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${yanaAPI}/entity/${yanaEntity}/dump?table=snei`;
+        const apiInterfaces = `${yanaAPI}/entity/${yanaEntity}/interfaces`;
 
-        console.log('Fetching data from:\n -', apiDevices, '\n -', apiLinks);
+        console.log('Fetching data from:\n -', apiDevices, '\n -', apiLinks, '\n -', apiInterfaces);
 
         try {
-            const [devices, links] = await Promise.all([
+            const [devices, links, interfaces] = await Promise.all([
                 fetch(apiDevices).then(res => res.json()),
-                fetch(apiLinks).then(res => res.json())
+                fetch(apiLinks).then(res => res.json()),
+                fetch(apiInterfaces).then(res => res.json())
             ]);
 
             const switches = devices.reduce((acc, device) => {
@@ -221,27 +223,37 @@ Draw.loadPlugin(function (ui) {
                 return acc;
             }, {});
 
-            const deviceConnections = devices.reduce((acc, device) => {
+            const connections = devices.reduce((acc, device) => {
                 acc[device.id] = 0;
                 return acc;
             }, {});
 
-            const formattedLinks = Object.entries(links).flatMap(([switchId, ports]) =>
+            const formattedLinks = Object.entries(links).flatMap(([sw, ports]) =>
                 Object.entries(ports).flatMap(([port, portLinks]) =>
-                    portLinks.filter(link => link.id !== switchId).map(link => {
+                    portLinks.filter(link => link.id !== sw).map(link => {
                         const targetIface = switches[link.id]?.[link.ifname];
                         if (targetIface) {
-                            const speed = targetIface.speed || 0;
-                            const duplex = targetIface.duplex || 0;
-                            deviceConnections[switchId]++;
-                            deviceConnections[link.id]++;
-                            return { sourceId: switchId, targetId: link.id, sourcePort: port, targetPort: link.ifname, speed, duplex };
-                        }
+                            connections[sw]++;
+                            connections[link.id]++;
+                            return {
+                                source: sw,
+                                target: link.id,
+                                sPort: port,
+                                tPort: link.ifname,
+                                speed: targetIface?.speed || 0,
+                                duplex: targetIface?.duplex || 0
+                            };
+                        };
                     }).filter(Boolean)
                 )
             );
 
-            return { devices, links: formattedLinks, deviceConnections };
+            return {
+                devices,
+                links: formattedLinks,
+                connections,
+                interfaces
+            };
         } catch (err) {
             console.error('Error fetching graph data:', err);
             return alert('Error fetching graph data.');
@@ -257,13 +269,13 @@ Draw.loadPlugin(function (ui) {
      */
     function loadGraph() {
         if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
-
-        fetchData().then(({ devices, links, deviceConnections }) => {
+    
+        fetchData().then(({ devices, links, connections, interfaces }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices, deviceConnections);
-                createLinks(graph, parent, switchMap, links);
+                const switchMap = createDevices(graph, parent, devices, connections);
+                createLinks(graph, parent, switchMap, links, interfaces);
             } finally {
                 organicLayout(graph);
                 graph.getModel().endUpdate();
@@ -280,16 +292,16 @@ Draw.loadPlugin(function (ui) {
      */
     function updateGraph() {
         if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
-
+    
         graph.cellsMovable = false;
-
-        fetchData().then(({ devices, links, deviceConnections }) => {
+    
+        fetchData().then(({ devices, links, connections, interfaces }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
             try {
-                const switchMap = createDevices(graph, parent, devices, deviceConnections);
+                const switchMap = createDevices(graph, parent, devices, connections);
                 updateDevices(graph, switchMap, devices);
-                updateLinks(graph, parent, switchMap, links);
+                updateLinks(graph, parent, switchMap, links, interfaces);
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -322,14 +334,14 @@ Draw.loadPlugin(function (ui) {
      * 
      * @returns {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex in the graph.
      */
-    function createDevices(graph, parent, devices, deviceConnections = {}) {
+    function createDevices(graph, parent, devices, connections = {}) {
         const switchMap = {};
         const doc = mxUtils.createXmlDocument();
         let firstObject = true;
 
         devices.forEach(device => {
             if (!graph.getModel().getCell(device.id)) {
-                const connectionCount = deviceConnections[device.id] || deviceConnections[device.name?.[0]?.split('.')[0]] || 0;
+                const connectionCount = connections[device.id] || connections[device.name?.[0]?.split('.')[0]] || 0;
                 const fontSize = Math.min(8 + connectionCount * 0.25, 20);
 
                 const name = device.name?.[0]?.split('.')[0] || device.id || 'Undefined';
@@ -399,25 +411,26 @@ Draw.loadPlugin(function (ui) {
      * @param {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      * @param {Array} links - An array of link data used to create edges between devices.
      */
-    function createLinks(graph, parent, switchMap, links) {
+    function createLinks(graph, parent, switchMap, links, interfaces) {
         const processedLinks = new Set();
-        links.forEach(link => {
-            const linkKey = `${link.sourceId}-${link.targetId}`;
-            const reverseLinkKey = `${link.targetId}-${link.sourceId}`;
-            if (!processedLinks.has(linkKey) && !processedLinks.has(reverseLinkKey)) {
-                const sourceSwitch = switchMap[link.sourceId];
-                const targetSwitch = switchMap[link.targetId];
 
-                if (sourceSwitch && targetSwitch) {
+        links.forEach(link => {
+            const linkKey = `${link.source}-${link.target}`;
+            const reverseLinkKey = `${link.target}-${link.source}`;
+            if (!processedLinks.has(linkKey) && !processedLinks.has(reverseLinkKey)) {
+                const source = switchMap[link.source];
+                const target = switchMap[link.target];
+
+                if (source && target) {
                     const edge = graph.insertEdge(
                         parent,
                         null,
                         null,
-                        sourceSwitch,
-                        targetSwitch,
+                        source,
+                        target,
                         getLinkStyle(link.speed, link.duplex)
                     );
-                    addPortLabels(graph, edge, link.sourcePort, link.targetPort, linkKey);
+                    addPortLabels(graph, edge, link.source, link.sPort, link.tPort, interfaces, linkKey);
                     processedLinks.add(linkKey);
                 }
             }
@@ -465,14 +478,37 @@ Draw.loadPlugin(function (ui) {
      * @param {string} targetPort - The target port label to display on the edge.
      * @param {string} linkKey - A unique key identifying the link (used to differentiate source and target labels).
      */
-    function addPortLabels(graph, edge, sourcePort, targetPort, linkKey) {
         const style = `${base}edgeLabel;resizable=0;align=center;verticalAlign=middle;labelBorderColor=white;points=[];${fontStyles(8)}`
+    function addPortLabels(graph, edge, source, sPort, tPort, interfaces, linkKey) {
         const sourceExist = graph.getModel().getCell(`${linkKey}-source`);
         const targetExist = graph.getModel().getCell(`${linkKey}-target`);
 
+        const calculateWidth = (port, tagged, untagged) => {
+            const taggedLength = tagged ? tagged.length : 0;
+            const untaggedLength = untagged ? untagged.length : 0;
+            const maxLength = Math.max(port.length, taggedLength, untaggedLength);
+            console.log(taggedLength, untaggedLength, maxLength);
+            return Math.min(50 + maxLength * 2, 100);
+        };
+
+        const formatVlanList = (vlanList, pvlan) => {
+            if (!vlanList) return 'N/A';
+            return vlanList.split(',').map(vlan => {
+                return vlan.trim() === pvlan?.toString() ? `<u>${vlan.trim()}</u>` : vlan.trim();
+            }).join(', ');
+        };
+
+        const swInterface = interfaces.find(iface => iface.did === source && iface.name === sPort);
+        const pvlan = swInterface?.pvlan || null;
+        const tagged = swInterface?.tagged || 'N/A';
+        const untagged = swInterface?.untagged || 'N/A';
+
+        const sourceLabelText = `<div style='width: ${calculateWidth(sPort, tagged, untagged)}px'>${sPort}\nTag: ${tagged}\nUntag: ${formatVlanList(untagged, pvlan)}</div>`;
+        const targetLabelText = `<div style='width: ${calculateWidth(tPort, tagged, untagged)}px'>${tPort}\nTag: ${tagged}\nUntag: ${formatVlanList(untagged, pvlan)}</div>`;
+
         if (!sourceExist) {
             const sourceLabel = new mxCell(
-                sourcePort,
+                sourceLabelText,
                 new mxGeometry(-0.5, -0.5, 0, 0),
                 style
             );
@@ -484,7 +520,7 @@ Draw.loadPlugin(function (ui) {
 
         if (!targetExist) {
             const targetLabel = new mxCell(
-                targetPort,
+                targetLabelText,
                 new mxGeometry(0.5, 0.5, 0, 0),
                 style
             );
