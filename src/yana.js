@@ -508,7 +508,7 @@ Draw.loadPlugin(function (ui) {
         const movableCells = Object.values(graph.getModel().getCells()).filter(cell => graph.isCellMovable(cell));
 
         layout.vertexArray = movableCells;
-        layout.forceConstant = 200;
+        layout.forceConstant = 400;
 
         graph.getModel().beginUpdate();
         try {
