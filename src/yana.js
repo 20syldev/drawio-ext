@@ -95,7 +95,7 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called with the YaNa API URL after it's validated and set.
      */
     function selectAPIs(callback) {
-        if (popup) return;
+        if (popup) popup.destroy();
 
         popup = new mxWindow('Select live and YaNa APIs', document.createElement('div'), 300, 300, 300, 120, true, true);
 
@@ -145,7 +145,7 @@ Draw.loadPlugin(function (ui) {
      * @param {function} callback - A callback function to be called after the entity is selected and saved.
      */
     function selectEntity(callback) {
-        if (popup) return;
+        if (popup) popup.destroy();
         if (!liveAPI || !yanaAPI) return alert('Please select both live and YaNa API URLs first.');
 
         fetch(`${yanaAPI}/entities`)
