@@ -478,10 +478,10 @@ Draw.loadPlugin(function (ui) {
      * @param {string} targetPort - The target port label to display on the edge.
      * @param {string} linkKey - A unique key identifying the link (used to differentiate source and target labels).
      */
-        const style = `${base}edgeLabel;resizable=0;align=center;verticalAlign=middle;labelBorderColor=white;points=[];${fontStyles(8)}`
     function addPortLabels(graph, edge, source, sPort, tPort, interfaces, linkKey) {
         const sourceExist = graph.getModel().getCell(`${linkKey}-source`);
         const targetExist = graph.getModel().getCell(`${linkKey}-target`);
+        const style = `${base}edgeLabel;textShadow=1;align=center;verticalAlign=middle;labelBorderColor=white;points=[];whiteSpace=wrap;${fontStyles(7)}`;
 
         const calculateWidth = (port, tagged, untagged) => {
             const taggedLength = tagged ? tagged.length : 0;
