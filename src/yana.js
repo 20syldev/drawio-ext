@@ -9,6 +9,7 @@ Draw.loadPlugin(function (ui) {
     const toolbar = ui.toolbar;                           // Initialize the toolbar
     let liveAPI = '', yanaAPI = '', yanaEntity = '';      // Initialize live API, YaNa API and entity variables
     let popup, isInitialized = false;                     // Initialize popup and initialization flag
+    let initialPositions = new Map();                     // Initialize map to store initial cell positions
 
     /**
      * Set the font styles for the graph elements. Default values can be changed here.
@@ -31,6 +32,36 @@ Draw.loadPlugin(function (ui) {
      * @param {mxEventObject} mxEvent - The event object containing the graph editor.
      */
     graph.getModel().addListener(mxEvent.NOTIFY, () => !isInitialized && (loadAttributes(), isInitialized = true));
+
+    /**
+     * Add a listener to update the cell attributes when a cell is moved.
+     * This function sets the 'yana.moved' attribute to 'true' for all moved cells.
+     * 
+     * @param {mxEventObject} mxEvent - The event object containing the moved cell.
+     * @param {mxCell} cell - The cell that was moved.
+     * @param {mxPoint} point - The new position of the cell.
+     */
+    graph.addMouseListener({
+        mouseDown: () => {
+            const cells = graph.getSelectionCells();
+            initialPositions = new Map(cells.map(cell => [cell.id, { x: cell.geometry.x, y: cell.geometry.y }]));
+        },
+        mouseMove: () => {},
+        mouseUp: () => {
+            const cells = graph.getSelectionCells();
+            cells.forEach(cell => {
+                const initialPosition = initialPositions.get(cell.id);
+                if (initialPosition && graph.getModel().isVertex(cell) && (cell.geometry.x !== initialPosition.x || cell.geometry.y !== initialPosition.y)) {
+                    cell.setAttribute('yana.moved', 'true');
+                    console.log('Cell moved:',
+                        cell.value && typeof cell.value.getAttribute === 'function'
+                        ? cell.value.getAttribute('label').split('\n')[0]
+                        : cell.id
+                    );
+                }
+            });
+            initialPositions.clear();
+        }
     });
 
     /**
