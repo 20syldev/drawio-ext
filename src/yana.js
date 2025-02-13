@@ -8,7 +8,7 @@ Draw.loadPlugin(function (ui) {
     const graph = ui.editor.graph;                        // Initialize the graph object
     const toolbar = ui.toolbar;                           // Initialize the toolbar
     let liveAPI = '', yanaAPI = '', yanaEntity = '';      // Initialize live API, YaNa API and entity variables
-    let popup;                                            // Initialize the popup object
+    let popup, isInitialized = false;                     // Initialize popup and initialization flag
 
     /**
      * Set the font styles for the graph elements. Default values can be changed here.
@@ -25,12 +25,12 @@ Draw.loadPlugin(function (ui) {
 
     /**
      * Await the completion of the graph editor initialization.
-     * Then add a listener to update the live API, YaNa API and entity values.
+     * Then, add a listener to load the cell attributes when the graph is loaded.
+     * Finally, it sets the 'isInitialized' flag to true for event ignoring.
      * 
-     * @param {function} callback - A callback function to be called after the graph editor is initialized.
+     * @param {mxEventObject} mxEvent - The event object containing the graph editor.
      */
-    graph.getModel().addListener(mxEvent.NOTIFY, function() {
-        loadAttributes();
+    graph.getModel().addListener(mxEvent.NOTIFY, () => !isInitialized && (loadAttributes(), isInitialized = true));
     });
 
     /**
