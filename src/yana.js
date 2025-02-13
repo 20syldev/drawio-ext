@@ -154,7 +154,6 @@ Draw.loadPlugin(function (ui) {
             yanaAPI = inputYana.value.trim();
             if (!liveAPI) return alert('Please enter a valid live API URL.');
             if (!yanaAPI) return alert('Please enter a valid YaNa API URL.');
-            updateAttributes();
             popup.destroy();
             popup = null;
             if (callback) callback(yanaAPI);
@@ -201,7 +200,6 @@ Draw.loadPlugin(function (ui) {
 
                 validateBtn.onclick = () => {
                     yanaEntity = select.value;
-                    updateAttributes();
                     popup.destroy();
                     popup = null;
                     if (callback) callback();
@@ -236,6 +234,8 @@ Draw.loadPlugin(function (ui) {
      */
     async function fetchData() {
         if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
+
+        updateAttributes();
 
         const apiDevices = `${yanaAPI}/entity/${yanaEntity}/devices?q=switch`;
         const apiLinks = `${yanaAPI}/entity/${yanaEntity}/dump?table=snei`;
