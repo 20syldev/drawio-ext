@@ -578,7 +578,7 @@ Draw.loadPlugin(function (ui) {
     function organicLayout(graph) {
         const layout = new mxFastOrganicLayout(graph);
         const parent = graph.getDefaultParent();
-        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => graph.isCellMovable(cell));
+        const movableCells = Object.values(graph.getModel().getCells()).filter(cell => graph.isCellMovable(cell) && !cell.getAttribute('yana.moved'));
 
         layout.vertexArray = movableCells;
         layout.forceConstant = 400;
