@@ -362,7 +362,7 @@ Draw.loadPlugin(function (ui) {
      * @param {mxGraph} graph - The graph object where the devices will be created.
      * @param {mxCell} parent - The parent cell to which the devices will be added.
      * @param {Array} devices - The array of device data used to create the devices in the graph.
-     * @param {Object} [connections={}] - An optional object that maps device IDs to their connection count (default is empty).
+     * @param {Object} [connections={}] - An object that maps device IDs to their connection count.
      * 
      * @returns {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      */
