@@ -525,7 +525,6 @@ Draw.loadPlugin(function (ui) {
             const taggedLength = tagged ? tagged.length : 0;
             const untaggedLength = untagged ? untagged.length : 0;
             const maxLength = Math.max(port.length, taggedLength, untaggedLength);
-            console.log(taggedLength, untaggedLength, maxLength);
             return Math.min(50 + maxLength * 2, 100);
         };
 
