@@ -332,7 +332,7 @@ Draw.loadPlugin(function (ui) {
             graph.getModel().beginUpdate();
             try {
                 const switchMap = createDevices(graph, parent, devices, connections);
-                updateDevices(graph, switchMap, devices);
+                updateDevices(graph, parent, switchMap, devices, connections);
                 updateLinks(graph, parent, switchMap, links, interfaces);
             } finally {
                 graph.getModel().endUpdate();
@@ -419,10 +419,12 @@ Draw.loadPlugin(function (ui) {
      * based on the updated device data.
      * 
      * @param {mxGraph} graph - The graph object containing the devices to update.
+     * @param {mxCell} parent - The parent cell to which the devices will be added.
      * @param {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      * @param {Array} devices - The array of updated device data used to update the devices in the graph.
+     * @param {Object} [connections={}] - An object that maps device IDs to their connection count.
      */
-    function updateDevices(graph, switchMap, devices) {
+    function updateDevices(graph, parent, switchMap, devices, connections = {}) {
         devices.forEach(device => {
             const switchVertex = graph.getModel().getCell(device.id);
             if (switchVertex) {
@@ -478,11 +480,12 @@ Draw.loadPlugin(function (ui) {
      * @param {mxCell} parent - The parent cell to which the new links will be added.
      * @param {Object} switchMap - A map where each key is a device ID and each value is the corresponding device vertex.
      * @param {Array} links - An array of updated link data used to update the links between devices.
+     * @param {Array} interfaces - An array of interface data used to add port labels to the edges.
      */
-    function updateLinks(graph, parent, switchMap, links) {
         const existingEdges = graph.getModel().getCells().filter(cell => graph.getModel().isEdge(cell));
         existingEdges.forEach(edge => graph.removeCells([edge]));
         createLinks(graph, parent, switchMap, links);
+    function updateLinks(graph, parent, switchMap, links, interfaces) {
     }
 
     /**
