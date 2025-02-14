@@ -162,8 +162,8 @@ Draw.loadPlugin(function (ui) {
         cancelBtn.textContent = 'Cancel';
 
         validateBtn.onclick = () => {
-            liveAPI = inputKompot.value.trim();
-            yanaAPI = inputYana.value.trim();
+            liveAPI = inputKompot.value.trim().replace(/\/$/, '');
+            yanaAPI = inputYana.value.trim().replace(/\/$/, '');
             if (!liveAPI) return alert('Please enter a valid live API URL.');
             if (!yanaAPI) return alert('Please enter a valid YaNa API URL.');
             popup.destroy();
