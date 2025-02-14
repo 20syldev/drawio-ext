@@ -493,10 +493,10 @@ Draw.loadPlugin(function (ui) {
      * @param {Array} links - An array of updated link data used to update the links between devices.
      * @param {Array} interfaces - An array of interface data used to add port labels to the edges.
      */
+    function updateLinks(graph, parent, switchMap, links, interfaces) {
         const existingEdges = graph.getModel().getCells().filter(cell => graph.getModel().isEdge(cell));
         existingEdges.forEach(edge => graph.removeCells([edge]));
         createLinks(graph, parent, switchMap, links);
-    function updateLinks(graph, parent, switchMap, links, interfaces) {
     }
 
     /**
