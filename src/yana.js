@@ -166,6 +166,7 @@ Draw.loadPlugin(function (ui) {
             yanaAPI = inputYana.value.trim().replace(/\/$/, '');
             if (!liveAPI) return alert('Please enter a valid live API URL.');
             if (!yanaAPI) return alert('Please enter a valid YaNa API URL.');
+            updateAttributes();
             popup.destroy();
             popup = null;
             if (callback) callback(yanaAPI);
