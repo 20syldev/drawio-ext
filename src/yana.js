@@ -337,9 +337,7 @@ Draw.loadPlugin(function (ui) {
      */
     function updateGraph() {
         if (!liveAPI || !yanaAPI || !yanaEntity) return alert('Please select both live and YaNa API, and an entity.');
-    
-        graph.cellsMovable = false;
-    
+
         fetchData().then(({ devices, links, connections, interfaces }) => {
             const parent = graph.getDefaultParent();
             graph.getModel().beginUpdate();
@@ -348,10 +346,9 @@ Draw.loadPlugin(function (ui) {
                 updateDevices(graph, parent, switchMap, devices, connections);
                 updateLinks(graph, parent, switchMap, links, interfaces);
             } finally {
+                organicLayout(graph);
                 graph.getModel().endUpdate();
             }
-            organicLayout(graph);
-            graph.cellsMovable = true;
         }).catch(console.error);
     }
 
