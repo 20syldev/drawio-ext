@@ -595,10 +595,7 @@ Draw.loadPlugin(function (ui) {
         layout.forceConstant = 400;
 
         graph.getModel().beginUpdate();
-        try {
-            layout.execute(parent);
-        } finally {
-            graph.getModel().endUpdate();
-        }
+        try { layout.execute(parent); }
+        finally { graph.getModel().endUpdate(); }
     }
 });
