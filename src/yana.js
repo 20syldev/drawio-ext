@@ -396,9 +396,10 @@ Draw.loadPlugin(function (ui) {
                 const userObject = doc.createElement('UserObject');
                 userObject.setAttribute('label', text);
                 userObject.setAttribute('link', `${liveAPI}#/panel?level=any&search=${name}`);
-                userObject.setAttribute('id', name);
+                userObject.setAttribute('yana.created', true);
                 userObject.setAttribute('live.property.fillColor', `={ return cState(data.apiHosts.data.hosts["${name}"]).fillColor; }`);
                 userObject.setAttribute('live.property.fontColor', `={ return cState(data.apiHosts.data.hosts["${name}"]).fontColor; }`);
+                userObject.setAttribute('id', name);
                 
                 if (firstObject) {
                     userObject.setAttribute('live.data', '/hosts');
