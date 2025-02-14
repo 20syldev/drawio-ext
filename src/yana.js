@@ -85,17 +85,28 @@ Draw.loadPlugin(function (ui) {
      * This function check if the cell attributes are set and updates them if necessary.
      */
     function loadAttributes() {
-        const graphXml = ui.editor.getGraphXml();
-        const rootCell = mxUtils.findNode(graphXml, 'id', '0');
+        const doc = mxUtils.createXmlDocument();
+        const cell = graph.getModel().getCell('0');
+        const userObject = doc.createElement('UserObject');
 
-        if (rootCell) {
-            liveAPI = rootCell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || 'https://tools.zenetys.com/kompot';
-            yanaAPI = rootCell.getAttribute('yana.api')?.replace(/\/$/, '') || 'https://tools.zenetys.com/yana-core/v1';
-            yanaEntity = rootCell.getAttribute('yana.entity')?.replace(/\/$/, '') || '';
+        if (cell) {
+            liveAPI = cell.getAttribute('live.api')?.replace(/\/api\/?$/, '') || 'https://tools.zenetys.com/kompot';
+            yanaAPI = cell.getAttribute('yana.api')?.replace(/\/$/, '') || 'https://tools.zenetys.com/yana-core/v1';
+            yanaEntity = cell.getAttribute('yana.entity')?.replace(/\/$/, '') || 'demo';
             console.log(' - Live API:', liveAPI || 'Undefined ;',
                         '\n - YaNa API:', yanaAPI || 'Undefined ;',
                         '\n - Entity:', yanaEntity || 'Undefined'
             );
+
+            userObject.setAttribute('live.api', liveAPI);
+            userObject.setAttribute('yana.api', yanaAPI);
+            userObject.setAttribute('yana.entity', yanaEntity);
+
+            cell.value = userObject;
+
+            graph.getModel().beginUpdate();
+            try { graph.refresh(); }
+            finally { graph.getModel().endUpdate(); }
         }
     }
 
@@ -104,18 +115,19 @@ Draw.loadPlugin(function (ui) {
      * This function fetches the root cell and updates its attributes if necessary.
      */
     function updateAttributes() {
-        const graphXml = ui.editor.getGraphXml();
-        const rootCell = mxUtils.findNode(graphXml, 'id', '0');
+        const cell = graph.getModel().getCell('0');
 
-        if (rootCell) {
-            if (liveAPI) rootCell.setAttribute('live.api', liveAPI + '/api');
-            if (yanaAPI) rootCell.setAttribute('yana.api', yanaAPI);
-            if (yanaEntity) rootCell.setAttribute('yana.entity', yanaEntity);
-            console.log(' - Live API:', liveAPI || 'Undefined ;',
+        if (cell) {
+            if (liveAPI) cell.setAttribute('live.api', liveAPI.trim() + '/api');
+            if (yanaAPI) cell.setAttribute('yana.api', yanaAPI);
+            if (yanaEntity) cell.setAttribute('yana.entity', yanaEntity);
+            console.log(' - Live API:', liveAPI.trim() || 'Undefined ;',
                         '\n - YaNa API:', yanaAPI || 'Undefined ;',
                         '\n - Entity:', yanaEntity || 'Undefined'
             );
-            ui.editor.setGraphXml(graphXml);
+            graph.getModel().beginUpdate();
+            try { graph.refresh(); }
+            finally { graph.getModel().endUpdate(); }
         }
     }
 
