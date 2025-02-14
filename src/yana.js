@@ -4,7 +4,7 @@
  * and visualize it as a graph in the Draw.io editor.
  */
 Draw.loadPlugin(function (ui) {
-    const base = 'auto-created=true;html=1;rounded=1;';   // Default styles for graph elements
+    const base = 'yana-created=true;html=1;rounded=1;';   // Default styles for graph elements
     const graph = ui.editor.graph;                        // Initialize the graph object
     const toolbar = ui.toolbar;                           // Initialize the toolbar
     let liveAPI = '', yanaAPI = '', yanaEntity = '';      // Initialize live API, YaNa API and entity variables
