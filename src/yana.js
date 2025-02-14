@@ -317,8 +317,8 @@ Draw.loadPlugin(function (ui) {
 
     /**
      * Update the graph with the latest data from the selected entity.
-     * This function fetches the latest devices and links, 
-     * then updates the graph elements with the new data.
+     * This function fetches the latest devices and links
+     * and then updates the graph elements with the new data.
      * 
      * @throws {Error} - If there is an error fetching or processing the graph data.
      */
